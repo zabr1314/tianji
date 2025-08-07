@@ -553,7 +553,7 @@ export default function NameAnalysisPage() {
                         zongge: '总格'
                       }
                       const fortuneKey = `${key}_fortune` as keyof typeof result.numerology
-                      const fortune = result.numerology[fortuneKey]
+                      const fortune = result.numerology[fortuneKey] as string
                       
                       return (
                         <div key={key} className="text-center">
