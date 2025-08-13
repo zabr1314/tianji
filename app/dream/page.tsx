@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Moon, Sparkles, RefreshCw, Brain, Heart, Star, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react'
 import { DreamCategory, DreamMood } from '@/lib/dream/calculator'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface DreamInterpretationResult {
   success: boolean
@@ -163,47 +165,72 @@ export default function DreamInterpretationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-indigo-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      
+      <div className="relative z-10">
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
 
           {!result && !isAnalyzing && (
             <>
-              {/* 页面介绍 */}
+              {/* 页面标题 - 简洁设计 */}
               <section className="text-center mb-12">
-                <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  AI智能解梦
-                </h2>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-6">
-                  结合传统解梦智慧与现代心理学理论，运用人工智能技术深度解读您的梦境。
-                  帮您理解潜意识信息，获得心理健康指导和人生启示。
-                </p>
-                <div className="flex justify-center items-center space-x-6 text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-2">
-                    <Moon className="h-4 w-4" />
-                    <span>梦境分析</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Brain className="h-4 w-4" />
-                    <span>心理解读</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4" />
-                    <span>AI智能分析</span>
+                <div className="max-w-4xl mx-auto">
+                  <h1 className="text-5xl font-serif font-bold text-red-700 dark:text-red-400 mb-6">
+                    梦境解析
+                  </h1>
+                  
+                  <p className="text-xl font-serif text-amber-700 dark:text-amber-300 mb-8">
+                    运用AI智慧，解读梦境奥秘，洞察内心世界
+                  </p>
+                  
+                  {/* 功能特色 - 简化版 */}
+                  <div className="flex justify-center items-center space-x-12 text-amber-600 dark:text-amber-400">
+                    <div className="flex items-center space-x-2">
+                      <Moon className="h-5 w-5" />
+                      <span className="font-serif">梦境分析</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Brain className="h-5 w-5" />
+                      <span className="font-serif">心理解读</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="h-5 w-5" />
+                      <span className="font-serif">AI智慧</span>
+                    </div>
                   </div>
                 </div>
               </section>
 
-              {/* 输入表单 */}
-              <section className="mb-12">
-                <Card className="max-w-4xl mx-auto shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Moon className="h-5 w-5 text-indigo-600" />
-                      <span>梦境解析</span>
+              {/* 输入表单 - 宋代美学风格 */}
+              <section className="mb-16">
+                <Card className="max-w-4xl mx-auto shadow-2xl border-2 border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 backdrop-blur-sm">
+                  <CardHeader className="text-center relative">
+                    {/* 传统云纹装饰 */}
+                    <div className="absolute top-4 left-4 w-8 h-8 opacity-20">
+                      <svg viewBox="0 0 32 32" className="w-full h-full text-amber-400">
+                        <path d="M8,16 Q4,8 8,4 Q12,0 16,4 Q20,0 24,4 Q28,8 24,16 Q28,24 24,28 Q20,32 16,28 Q12,32 8,28 Q4,24 8,16 Z" fill="currentColor"/>
+                      </svg>
+                    </div>
+                    <div className="absolute top-4 right-4 w-8 h-8 opacity-20">
+                      <svg viewBox="0 0 32 32" className="w-full h-full text-amber-400">
+                        <path d="M8,16 Q4,8 8,4 Q12,0 16,4 Q20,0 24,4 Q28,8 24,16 Q28,24 24,28 Q20,32 16,28 Q12,32 8,28 Q4,24 8,16 Z" fill="currentColor"/>
+                      </svg>
+                    </div>
+                    
+                    <CardTitle className="text-3xl font-serif font-bold text-amber-800 dark:text-amber-200 mb-4">
+                      梦境录入
                     </CardTitle>
-                    <CardDescription>
-                      请详细描述您的梦境，选择相关分类和情绪
+                    
+                    {/* 古典装饰线 */}
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-16 h-px bg-amber-400 dark:bg-amber-600"></div>
+                      <div className="mx-3 w-2 h-2 bg-amber-400 dark:bg-amber-600 rounded-full"></div>
+                      <div className="w-16 h-px bg-amber-400 dark:bg-amber-600"></div>
+                    </div>
+                    
+                    <CardDescription className="text-lg font-serif text-amber-700 dark:text-amber-300 leading-relaxed">
+                      请详述梦境内容，选择分类情绪，以助AI深度解析
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -361,29 +388,41 @@ export default function DreamInterpretationPage() {
                       </div>
                     </div>
 
-                    {/* 分析按钮 */}
-                    <div className="text-center pt-4">
-                      <Button 
-                        onClick={handleAnalyze}
-                        size="lg"
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-12"
-                        disabled={isAnalyzing}
-                      >
-                        {isAnalyzing ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            解析中...
-                          </>
-                        ) : (
-                          <>
-                            <Moon className="w-4 h-4 mr-2" />
-                            开始解梦 (消耗 80 天机点)
-                          </>
-                        )}
-                      </Button>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        梦境解析完成后将消耗 80 天机点
-                      </p>
+                    {/* 分析按钮 - 古典风格 */}
+                    <div className="text-center pt-6">
+                      <div className="relative inline-block">
+                        {/* 按钮装饰边框 */}
+                        <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 rounded-lg opacity-20 blur-sm"></div>
+                        <Button 
+                          onClick={handleAnalyze}
+                          size="lg"
+                          className="relative bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 hover:from-amber-700 hover:via-orange-700 hover:to-red-700 text-white font-serif px-16 py-4 text-lg shadow-xl border-2 border-amber-300 dark:border-amber-500"
+                          disabled={isAnalyzing}
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                              <span className="font-serif tracking-wide">解析梦境中...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Moon className="w-5 h-5 mr-3" />
+                              <span className="font-serif tracking-wide">开始解梦</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {/* 费用说明 - 古典样式 */}
+                      <div className="mt-4 text-center">
+                        <div className="inline-flex items-center px-4 py-2 bg-amber-100 dark:bg-amber-800 rounded-full border border-amber-300 dark:border-amber-600">
+                          <div className="w-2 h-2 bg-amber-500 rounded-full mr-2"></div>
+                          <span className="text-sm font-serif text-amber-700 dark:text-amber-300">
+                            消耗 80 天机点
+                          </span>
+                          <div className="w-2 h-2 bg-amber-500 rounded-full ml-2"></div>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -394,24 +433,24 @@ export default function DreamInterpretationPage() {
           {/* 分析中状态 */}
           {isAnalyzing && (
             <section className="text-center py-16">
-              <Card className="max-w-2xl mx-auto">
+              <Card className="max-w-2xl mx-auto border border-purple-200 dark:border-purple-700 bg-white/90 dark:bg-slate-900/90">
                 <CardContent className="pt-12 pb-12">
                   <div className="flex flex-col items-center space-y-6">
                     <div className="relative">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-600 border-t-transparent"></div>
-                      <Moon className="absolute inset-0 m-auto h-6 w-6" />
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-600 border-t-transparent"></div>
+                      <Moon className="absolute inset-0 m-auto h-6 w-6 text-purple-600" />
                     </div>
                     <div className="text-center">
-                      <h3 className="text-xl font-semibold mb-2">正在解析梦境...</h3>
-                      <p className="text-muted-foreground mb-4">
+                      <h3 className="text-xl font-serif font-semibold mb-2 text-slate-700 dark:text-slate-300">正在解析梦境...</h3>
+                      <p className="text-base font-serif text-slate-600 dark:text-slate-400 mb-4">
                         AI正在结合心理学理论和传统解梦智慧，深度分析您的梦境
                       </p>
                       <div className="flex flex-wrap justify-center gap-2">
-                        <Badge variant="secondary">梦境分类</Badge>
-                        <Badge variant="secondary">心理分析</Badge>
-                        <Badge variant="secondary">象征解读</Badge>
-                        <Badge variant="secondary">生活指导</Badge>
-                        <Badge variant="secondary">AI深度解释</Badge>
+                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300 font-serif">梦境分类</Badge>
+                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300 font-serif">心理分析</Badge>
+                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300 font-serif">象征解读</Badge>
+                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300 font-serif">生活指导</Badge>
+                        <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-300 font-serif">AI深度解释</Badge>
                       </div>
                     </div>
                   </div>
@@ -440,25 +479,56 @@ export default function DreamInterpretationPage() {
           {/* 解析结果 */}
           {result && (
             <section>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold">梦境解析结果</h3>
-                <Button onClick={handleReset} variant="outline">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl font-serif font-bold text-purple-700 dark:text-purple-300 mb-4">梦境解析结果</h3>
+                <div className="w-24 h-px bg-purple-300 dark:bg-purple-600 mx-auto mb-6"></div>
+                <Button onClick={handleReset} variant="outline" className="font-serif border-purple-300 dark:border-purple-600">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   解析其他梦境
                 </Button>
               </div>
 
-              {/* 梦境摘要 */}
-              <Card className="mb-8 shadow-lg">
-                <CardHeader className="text-center">
-                  <div className="text-sm text-muted-foreground">
-                    {result.dream_input.category} • {result.dream_input.mood}情绪
+              {/* 梦境摘要 - 宋代美学风格 */}
+              <Card className="mb-12 shadow-2xl border-2 border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800">
+                <CardHeader className="text-center relative pb-8">
+                  {/* 背景装饰 */}
+                  <div className="absolute inset-0 opacity-5">
+                    <svg className="w-full h-full" viewBox="0 0 400 200">
+                      <circle cx="100" cy="50" r="30" fill="currentColor" className="text-amber-400"/>
+                      <circle cx="300" cy="150" r="20" fill="currentColor" className="text-orange-400"/>
+                      <path d="M50,100 Q100,80 150,100 T250,100" stroke="currentColor" strokeWidth="2" fill="none" className="text-red-400"/>
+                    </svg>
                   </div>
-                  <CardTitle className="text-2xl bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    梦境解析报告
-                  </CardTitle>
-                  <div className="text-base text-muted-foreground max-w-3xl mx-auto">
-                    {result.analysis.dream_summary}
+                  
+                  {/* 分类标签 */}
+                  <div className="relative z-10 mb-6">
+                    <div className="inline-flex items-center px-4 py-2 bg-amber-100 dark:bg-amber-800 rounded-full border border-amber-300 dark:border-amber-600">
+                      <span className="text-sm font-serif text-amber-700 dark:text-amber-300">
+                        {result.dream_input.category} • {result.dream_input.mood}情绪
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* 装饰线 */}
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="w-16 h-px bg-amber-400 dark:bg-amber-600"></div>
+                    <div className="mx-4 w-3 h-3 border-2 border-amber-400 dark:border-amber-600 rounded-full bg-amber-100 dark:bg-amber-800"></div>
+                    <div className="w-16 h-px bg-amber-400 dark:bg-amber-600"></div>
+                  </div>
+                  
+                  {/* 传统印章式标题 */}
+                  <div className="relative inline-block mb-6">
+                    <div className="absolute inset-0 bg-red-600 dark:bg-red-700 transform rotate-45 rounded-lg opacity-15"></div>
+                    <CardTitle className="relative text-4xl font-serif font-bold text-red-700 dark:text-red-400 px-8 py-4 tracking-wider">
+                      梦境解析报告
+                    </CardTitle>
+                  </div>
+                  
+                  {/* 摘要内容 */}
+                  <div className="bg-white/80 dark:bg-slate-900/80 rounded-lg p-6 border border-amber-200 dark:border-amber-700 shadow-lg max-w-4xl mx-auto">
+                    <p className="text-lg font-serif leading-relaxed text-slate-700 dark:text-slate-300 text-justify">
+                      {result.analysis.dream_summary}
+                    </p>
                   </div>
                 </CardHeader>
               </Card>
@@ -474,18 +544,17 @@ export default function DreamInterpretationPage() {
                   }
                   
                   return (
-                    <Card key={key}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center justify-between">
-                          <span>{labels[key as keyof typeof labels]}</span>
-                          <TrendingUp className="h-4 w-4" />
+                    <Card key={key} className="border border-purple-200 dark:border-purple-700 bg-white/90 dark:bg-slate-900/90">
+                      <CardHeader className="text-center pb-2">
+                        <CardTitle className="text-sm font-serif font-semibold text-purple-700 dark:text-purple-300">
+                          {labels[key as keyof typeof labels]}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
-                        <div className={`text-2xl font-bold ${getQualityColor(score)}`}>
+                      <CardContent className="text-center">
+                        <div className={`text-2xl font-serif font-bold ${getQualityColor(score)} drop-shadow-sm`}>
                           {score}/10
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs font-serif text-purple-600 dark:text-purple-400">
                           {getQualityLabel(score)}
                         </div>
                       </CardContent>
@@ -496,9 +565,10 @@ export default function DreamInterpretationPage() {
 
               {/* 分类和象征分析 */}
               <div className="grid md:grid-cols-2 gap-6 mb-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-blue-600">梦境分析</CardTitle>
+                <Card className="border border-purple-200 dark:border-purple-700 bg-white/90 dark:bg-slate-900/90">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-lg font-serif font-bold text-purple-700 dark:text-purple-300">梦境分析</CardTitle>
+                    <div className="w-12 h-px bg-purple-300 dark:bg-purple-600 mx-auto mt-2"></div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -532,9 +602,10 @@ export default function DreamInterpretationPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-purple-600">心理状态</CardTitle>
+                <Card className="border border-purple-200 dark:border-purple-700 bg-white/90 dark:bg-slate-900/90">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-lg font-serif font-bold text-purple-700 dark:text-purple-300">心理状态</CardTitle>
+                    <div className="w-12 h-px bg-purple-300 dark:bg-purple-600 mx-auto mt-2"></div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -574,9 +645,10 @@ export default function DreamInterpretationPage() {
 
               {/* 象征解释 */}
               {result.analysis.symbolic_interpretation.key_symbols.length > 0 && (
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle className="text-green-600">象征符号解读</CardTitle>
+                <Card className="mb-8 border border-purple-200 dark:border-purple-700 bg-white/90 dark:bg-slate-900/90">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-xl font-serif font-bold text-purple-700 dark:text-purple-300">象征符号解读</CardTitle>
+                    <div className="w-16 h-px bg-purple-300 dark:bg-purple-600 mx-auto mt-2"></div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -715,48 +787,236 @@ export default function DreamInterpretationPage() {
                 </Card>
               </div>
 
-              {/* AI深度解读 */}
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Sparkles className="h-5 w-5" />
-                    <span>AI专业解读</span>
-                  </CardTitle>
+              {/* AI深度解读 - 宋代美学风格，突出重点 */}
+              <Card className="mb-8 bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 border-2 border-amber-300 dark:border-amber-600 shadow-2xl">
+                <CardHeader className="text-center relative">
+                  {/* 古典装饰 */}
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-16 h-8 opacity-20">
+                    <svg viewBox="0 0 64 32" className="w-full h-full text-amber-400">
+                      <path d="M8,16 Q16,8 24,16 Q32,8 40,16 Q48,8 56,16 Q48,24 40,16 Q32,24 24,16 Q16,24 8,16 Z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  
+                  {/* 传统印章式标题 */}
+                  <div className="relative inline-block mb-6 mt-4">
+                    <div className="absolute inset-0 bg-red-600 dark:bg-red-700 transform rotate-45 rounded-lg opacity-15"></div>
+                    <CardTitle className="relative text-3xl font-serif font-bold text-red-700 dark:text-red-400 px-6 py-3 tracking-wider">
+                      AI智慧解读
+                    </CardTitle>
+                  </div>
+                  
+                  {/* 装饰线 */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-12 h-px bg-amber-400 dark:bg-amber-600"></div>
+                    <Sparkles className="h-5 w-5 mx-3 text-amber-500" />
+                    <div className="w-12 h-px bg-amber-400 dark:bg-amber-600"></div>
+                  </div>
+                  
+                  <p className="text-lg font-serif text-amber-700 dark:text-amber-300 italic">
+                    深度解析·智慧启迪·人生指引
+                  </p>
                 </CardHeader>
-                <CardContent>
-                  <div className="whitespace-pre-line text-sm leading-relaxed">
-                    {result.ai_interpretation}
+                
+                <CardContent className="px-8 pb-8">
+                  {/* AI解读内容 - Markdown格式支持 */}
+                  <div className="bg-white/90 dark:bg-slate-900/90 rounded-lg p-6 border border-amber-200 dark:border-amber-700 shadow-lg">
+                    <div className="max-w-none">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          // 段落 - 统一格式
+                          p: ({children}) => (
+                            <p className="mb-6 text-base leading-7 text-slate-700 dark:text-slate-300 font-serif" 
+                               style={{ textAlign: 'justify', lineHeight: '1.8' }}>
+                              {children}
+                            </p>
+                          ),
+                          // 标题系列 - 清晰层次
+                          h1: ({children}) => (
+                            <div className="mb-6 mt-8 first:mt-0">
+                              <div className="relative">
+                                <div className="absolute inset-0 bg-red-600 dark:bg-red-700 transform rotate-45 rounded-md opacity-10"></div>
+                                <h1 className="relative text-2xl font-bold text-red-700 dark:text-red-400 px-4 py-3 font-serif tracking-wide">
+                                  {children}
+                                </h1>
+                              </div>
+                            </div>
+                          ),
+                          h2: ({children}) => (
+                            <div className="mb-5 mt-7">
+                              <h2 className="text-xl font-semibold text-red-700 dark:text-red-400 border-l-4 border-amber-400 pl-4 py-2 bg-amber-50 dark:bg-amber-900/20 font-serif">
+                                {children}
+                              </h2>
+                            </div>
+                          ),
+                          h3: ({children}) => (
+                            <div className="mb-4 mt-6">
+                              <h3 className="text-lg font-medium text-red-600 dark:text-red-400 border-l-3 border-amber-300 pl-3 py-1 font-serif">
+                                {children}
+                              </h3>
+                            </div>
+                          ),
+                          // 强调和格式
+                          strong: ({children}) => (
+                            <strong className="text-orange-700 dark:text-orange-300 font-semibold px-1">
+                              {children}
+                            </strong>
+                          ),
+                          em: ({children}) => (
+                            <em className="text-amber-700 dark:text-amber-300 italic">
+                              {children}
+                            </em>
+                          ),
+                          // 引用块 - 重要信息突出
+                          blockquote: ({children}) => (
+                            <div className="my-6">
+                              <blockquote className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/15 dark:via-amber-900/15 dark:to-yellow-900/15 border-l-4 border-orange-400 p-5 rounded-r-lg shadow-sm">
+                                <div className="text-orange-800 dark:text-orange-200 font-medium leading-relaxed">
+                                  {children}
+                                </div>
+                              </blockquote>
+                            </div>
+                          ),
+                          // 有序列表 - 清晰编号
+                          ol: ({children}) => (
+                            <div className="my-6">
+                              <ol className="space-y-3 counter-reset-none">
+                                {children}
+                              </ol>
+                            </div>
+                          ),
+                          // 无序列表
+                          ul: ({children}) => (
+                            <div className="my-6">
+                              <ul className="space-y-3">
+                                {children}
+                              </ul>
+                            </div>
+                          ),
+                          // 列表项 - 统一格式
+                          li: ({children, ...props}) => {
+                            const isOrdered = props.ordered;
+                            return (
+                              <li className={`${isOrdered ? 'list-decimal' : 'list-disc'} list-inside text-slate-700 dark:text-slate-300 leading-relaxed pl-2`}>
+                                <span className="ml-2 font-serif">{children}</span>
+                              </li>
+                            )
+                          },
+                          // 代码
+                          code: ({children, inline}) => {
+                            if (inline) {
+                              return (
+                                <code className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-sm font-mono">
+                                  {children}
+                                </code>
+                              )
+                            }
+                            return (
+                              <code className="block bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto text-sm font-mono">
+                                {children}
+                              </code>
+                            )
+                          },
+                          pre: ({children}) => (
+                            <div className="my-6">
+                              <pre className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg overflow-x-auto border border-slate-200 dark:border-slate-700">
+                                {children}
+                              </pre>
+                            </div>
+                          ),
+                          // 分隔线
+                          hr: () => (
+                            <div className="my-8">
+                              <div className="flex items-center justify-center">
+                                <div className="w-16 h-px bg-amber-300 dark:bg-amber-600"></div>
+                                <div className="mx-4 w-2 h-2 bg-amber-400 dark:bg-amber-500 rounded-full"></div>
+                                <div className="w-16 h-px bg-amber-300 dark:bg-amber-600"></div>
+                              </div>
+                            </div>
+                          )
+                        }}
+                      >
+                        {result.ai_interpretation}
+                      </ReactMarkdown>
+                    </div>
+                    
+                    {/* 底部装饰 */}
+                    <div className="mt-8 pt-6 border-t border-amber-200 dark:border-amber-700">
+                      <div className="flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <div className="w-8 h-px bg-amber-400 dark:bg-amber-600"></div>
+                        <div className="mx-3 text-sm font-serif">✦ 智慧解读完毕 ✦</div>
+                        <div className="w-8 h-px bg-amber-400 dark:bg-amber-600"></div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* 操作按钮 */}
-              <div className="text-center space-x-4">
-                <Button onClick={handleReset}>
-                  <Moon className="h-4 w-4 mr-2" />
-                  解析其他梦境
-                </Button>
-                <Button variant="outline">
-                  <Star className="h-4 w-4 mr-2" />
-                  保存到收藏
-                </Button>
-                <Button variant="outline">
-                  分享解析结果
-                </Button>
+              {/* 操作按钮 - 古典风格 */}
+              <div className="text-center space-y-4">
+                <div className="flex flex-wrap justify-center gap-4">
+                  <Button 
+                    onClick={handleReset} 
+                    className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-serif px-8 py-3 shadow-lg border-2 border-amber-300 dark:border-amber-500"
+                  >
+                    <Moon className="h-5 w-5 mr-2" />
+                    解析其他梦境
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 font-serif px-8 py-3"
+                  >
+                    <Star className="h-5 w-5 mr-2" />
+                    保存到收藏
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 font-serif px-8 py-3"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    分享解析结果
+                  </Button>
+                </div>
+                
+                {/* 底部装饰 */}
+                <div className="flex items-center justify-center mt-8 text-amber-600 dark:text-amber-400">
+                  <div className="w-12 h-px bg-amber-400 dark:bg-amber-600"></div>
+                  <div className="mx-4 text-sm font-serif">✦ 梦境解析完成 ✦</div>
+                  <div className="w-12 h-px bg-amber-400 dark:bg-amber-600"></div>
+                </div>
               </div>
             </section>
           )}
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-background/95 mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-muted-foreground">
-            <p>&copy; 2024 天机AI. 解读梦境，洞察心灵</p>
+      {/* Footer - 宋代美学风格 */}
+        <footer className="border-t-2 border-amber-300 dark:border-amber-600 bg-gradient-to-r from-amber-50 via-orange-50 to-red-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 backdrop-blur-sm mt-20 relative">
+          <div className="container mx-auto px-4 py-12">
+            <div className="text-center">
+              {/* 装饰性图案 */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-8 h-px bg-amber-400 dark:bg-amber-600"></div>
+                <div className="mx-4 w-4 h-4 border-2 border-amber-400 dark:border-amber-600 rounded-full bg-amber-100 dark:bg-amber-800"></div>
+                <div className="w-24 h-px bg-amber-400 dark:bg-amber-600"></div>
+                <div className="mx-4 text-amber-600 dark:text-amber-400">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </div>
+                <div className="w-24 h-px bg-amber-400 dark:bg-amber-600"></div>
+                <div className="mx-4 w-4 h-4 border-2 border-amber-400 dark:border-amber-600 rounded-full bg-amber-100 dark:bg-amber-800"></div>
+                <div className="w-8 h-px bg-amber-400 dark:bg-amber-600"></div>
+              </div>
+              
+              <div className="text-amber-700 dark:text-amber-300">
+                <p className="text-lg font-serif mb-2">传承千年智慧，融汇现代科技</p>
+                <p className="text-sm font-serif opacity-80">&copy; 2024 天机AI · 梦境解析专家</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   )
 }

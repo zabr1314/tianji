@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { BuguaCalculator, BuguaQuestion } from '@/lib/bugua/calculator'
+import { TianjiPointsService, AnalysisRecordsService } from '@/lib/database/services'
 import OpenAI from 'openai'
 
 // 初始化DeepSeek客户端
@@ -18,6 +20,17 @@ interface BuguaAnalyzeRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户认证
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '用户未认证' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json() as BuguaAnalyzeRequest
 
     // 验证必填字段
@@ -53,6 +66,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 检查用户天机点余额
+    const serviceCost = 150 // 卜卦分析消耗150天机点
+    const hasEnoughPoints = await TianjiPointsService.hasEnoughPoints(user.id, serviceCost)
+    
+    if (!hasEnoughPoints) {
+      return NextResponse.json(
+        { 
+          error: '天机点余额不足',
+          required_points: serviceCost,
+          service_type: 'bugua'
+        },
+        { status: 402 }
+      )
+    }
+
     // 构建占卜问题对象
     const buguaQuestion: BuguaQuestion = {
       question: body.question,
@@ -71,8 +99,58 @@ export async function POST(request: NextRequest) {
     // 生成AI深度分析
     const aiAnalysis = await generateAIAnalysis(buguaQuestion, buguaResult)
 
-    // 计算服务费用（150天机点）
-    const cost = 150
+    // 先扣除天机点
+    const pointsDeducted = await TianjiPointsService.spendPoints(
+      user.id, 
+      serviceCost, 
+      'bugua', 
+      `卜卦占卜：${body.question}`
+    )
+    
+    if (!pointsDeducted) {
+      return NextResponse.json(
+        { error: '天机点扣除失败' },
+        { status: 402 }
+      )
+    }
+
+    // 保存到历史记录
+    const categoryMap = {
+      'career': '事业工作',
+      'love': '感情婚姻',
+      'wealth': '财运投资', 
+      'health': '健康身体',
+      'study': '学习考试',
+      'family': '家庭关系',
+      'travel': '出行旅游',
+      'other': '其他事务'
+    }
+    
+    const title = `${categoryMap[body.category]} - ${body.question}`
+    const summary = `${buguaResult.hexagram.name}，${buguaResult.hexagram.fortune}。综合评分${buguaResult.scores.overall_score}分。${buguaResult.interpretation.advice}`
+
+    await AnalysisRecordsService.saveRecord({
+      userId: user.id,
+      analysisType: 'bugua',
+      title,
+      summary,
+      inputData: {
+        question: body.question,
+        category: body.category,
+        urgency: body.urgency,
+        method: body.method,
+        coin_results: body.coin_results
+      },
+      outputData: {
+        hexagram: buguaResult.hexagram,
+        interpretation: buguaResult.interpretation,
+        details: buguaResult.details,
+        scores: buguaResult.scores,
+        timeframe: buguaResult.timeframe,
+        ai_analysis: aiAnalysis
+      },
+      pointsCost: serviceCost
+    })
 
     const response = {
       success: true,
@@ -83,7 +161,7 @@ export async function POST(request: NextRequest) {
       scores: buguaResult.scores,
       timeframe: buguaResult.timeframe,
       ai_analysis: aiAnalysis,
-      cost,
+      cost: serviceCost,
       timestamp: new Date().toISOString(),
       method: body.method
     }

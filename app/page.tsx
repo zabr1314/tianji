@@ -1,12 +1,52 @@
 'use client'
 
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // 创建单例supabase客户端
+  const supabase = useMemo(() => createClient(), [])
+
+  useEffect(() => {
+    let mounted = true
+
+    async function getUser() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (mounted) {
+          setUser(user)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
+    }
+    
+    getUser()
+
+    // 监听认证状态变化
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        setUser(session?.user || null)
+      }
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const services = [
     {
@@ -172,11 +212,21 @@ export default function Home() {
                   开始八字分析
                 </Button>
               </Link>
-              <Link href="/auth/sign-up">
-                <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/20 px-8 py-3">
-                  免费注册体验
-                </Button>
-              </Link>
+              {!loading && (
+                user ? (
+                  <Link href="/history">
+                    <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/20 px-8 py-3">
+                      查看历史记录
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/auth/sign-up">
+                    <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/20 px-8 py-3">
+                      免费注册体验
+                    </Button>
+                  </Link>
+                )
+              )}
             </div>
             
             {/* 服务统计数据 - 宋代美学风格 */}
@@ -493,25 +543,53 @@ export default function Home() {
             
             <CardContent className="relative">
               <h3 className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-4">
-                开启您的命理智慧之旅
+                {user ? '继续您的命理智慧之旅' : '开启您的命理智慧之旅'}
               </h3>
               <div className="w-24 h-px bg-slate-400 dark:bg-slate-500 mx-auto mb-6"></div>
               <p className="text-slate-700 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
-                注册即可获得300天机点，足够进行一次完整的八字分析<br />
-                让古老智慧为您的人生决策提供指引
+                {user ? (
+                  <>
+                    探索更多命理分析服务，深入了解您的命运轨迹<br />
+                    让古老智慧继续为您的人生决策提供指引
+                  </>
+                ) : (
+                  <>
+                    注册即可获得300天机点，足够进行一次完整的八字分析<br />
+                    让古老智慧为您的人生决策提供指引
+                  </>
+                )}
               </p>
-              <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
-                <Link href="/auth/sign-up">
-                  <Button size="lg" className="bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white px-8 py-3">
-                    免费注册
-                  </Button>
-                </Link>
-                <Link href="/bazi">
-                  <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 px-8 py-3">
-                    立即分析
-                  </Button>
-                </Link>
-              </div>
+              {!loading && (
+                <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
+                  {user ? (
+                    <>
+                      <Link href="/calendar">
+                        <Button size="lg" className="bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white px-8 py-3">
+                          查看今日运势
+                        </Button>
+                      </Link>
+                      <Link href="/bazi">
+                        <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 px-8 py-3">
+                          重新分析
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/auth/sign-up">
+                        <Button size="lg" className="bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white px-8 py-3">
+                          免费注册
+                        </Button>
+                      </Link>
+                      <Link href="/bazi">
+                        <Button variant="outline" size="lg" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 px-8 py-3">
+                          立即分析
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </section>

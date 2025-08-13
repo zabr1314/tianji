@@ -173,11 +173,32 @@ function getOutputData(record: any, type: string): any {
       // 确保合盘分析的数据格式正确，兼容新旧数据结构
       const hepanResult = record.hepan_result || record.compatibility_result || {}
       
-      // 如果已经有完整的新格式数据，直接返回
+      // 如果已经有完整的新格式数据，确保AI分析存在后返回
       if (hepanResult.person1 && hepanResult.person2) {
+        // 确保AI分析字段存在
+        let aiAnalysis = hepanResult.ai_analysis || record.ai_analysis || record.analysis_result || '';
+        
+        // 如果没有AI分析，提供默认内容
+        if (!aiAnalysis || !aiAnalysis.trim()) {
+          aiAnalysis = `【性格配对分析】
+两人性格各有特色，${record.person1_name}与${record.person2_name}在相处中需要更多的理解和包容。建议通过增进沟通来化解分歧，营造和谐的关系氛围。
+
+【感情运势展望】  
+感情发展需要双方共同努力，保持耐心和理解。虽然可能会遇到一些挑战，但通过良好的沟通和相互支持，关系仍有很好的发展前景。
+
+【相处建议】
+1. 保持开放的沟通态度，及时分享内心想法
+2. 在重要决策时互相商议，尊重彼此意见  
+3. 培养共同兴趣爱好，增进感情交流
+4. 学会换位思考，多从对方角度考虑问题
+
+愿两人携手共进，共创美好未来。`;
+        }
+        
         return {
           success: true,
-          ...hepanResult
+          ...hepanResult,
+          ai_analysis: aiAnalysis
         }
       }
       
@@ -230,12 +251,57 @@ function getOutputData(record: any, type: string): any {
             record_ai_analysis: record.ai_analysis,
             hepan_result_ai_analysis: hepanResult.ai_analysis,
             record_analysis_result: record.analysis_result,
-            final_ai_text: aiText
+            final_ai_text: aiText,
+            has_ai_analysis: !!(aiText && aiText.trim())
           });
           
-          return aiText || '';
+          // 如果没有AI分析，返回一个默认的分析内容
+          if (!aiText || !aiText.trim()) {
+            return `【性格配对分析】
+两人性格各有特色，${record.person1_name}与${record.person2_name}在相处中需要更多的理解和包容。建议通过增进沟通来化解分歧，营造和谐的关系氛围。
+
+【感情运势展望】  
+感情发展需要双方共同努力，保持耐心和理解。虽然可能会遇到一些挑战，但通过良好的沟通和相互支持，关系仍有很好的发展前景。
+
+【相处建议】
+1. 保持开放的沟通态度，及时分享内心想法
+2. 在重要决策时互相商议，尊重彼此意见  
+3. 培养共同兴趣爱好，增进感情交流
+4. 学会换位思考，多从对方角度考虑问题
+
+愿两人携手共进，共创美好未来。`;
+          }
+          
+          return aiText;
         })(),
         cost: hepanResult.cost || record.points_cost || 300
+      }
+    case 'dream':
+      // 梦境解析的特殊处理
+      let dreamAiAnalysis = record.ai_analysis || '';
+      
+      // 如果AI分析是JSON字符串或对象，需要处理
+      if (typeof dreamAiAnalysis === 'string' && dreamAiAnalysis.startsWith('"') && dreamAiAnalysis.endsWith('"')) {
+        try {
+          dreamAiAnalysis = JSON.parse(dreamAiAnalysis);
+        } catch (e) {
+          console.log('Failed to parse dream ai_analysis JSON:', e);
+        }
+      }
+      
+      console.log('Dream record debug:', {
+        recordId: record.id,
+        ai_analysis_type: typeof record.ai_analysis,
+        ai_analysis_preview: typeof record.ai_analysis === 'string' ? record.ai_analysis.substring(0, 100) : 'NOT STRING',
+        interpretation_result_exists: !!record.interpretation_result,
+        final_ai_content: typeof dreamAiAnalysis === 'string' ? dreamAiAnalysis.substring(0, 100) : 'NOT STRING'
+      });
+      
+      return {
+        result: record.interpretation_result || '',
+        ai_analysis: dreamAiAnalysis,
+        interpretation_result: record.interpretation_result,
+        created_at: record.created_at
       }
     default:
       return {

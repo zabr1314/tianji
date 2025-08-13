@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { Navbar } from "@/components/navbar";
+import { NavbarOptimized } from "@/components/navbar-optimized";
+import { FirstScreenOptimizer } from "@/components/first-screen-optimizer";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -41,11 +43,15 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 获取服务器端用户状态
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased min-h-screen bg-amber-50/30 dark:bg-slate-900`}>
@@ -55,7 +61,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
+          <FirstScreenOptimizer />
+          <NavbarOptimized initialUser={user} />
           <main>
             {children}
           </main>

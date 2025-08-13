@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { DreamAnalysisCalculator, DreamAnalysisInput, DreamCategory, DreamMood } from '@/lib/dream/calculator'
+import { TianjiPointsService, AnalysisRecordsService } from '@/lib/database/services'
 import OpenAI from 'openai'
 
 // 初始化DeepSeek客户端
@@ -14,6 +16,17 @@ interface DreamInterpreteRequest extends DreamAnalysisInput {
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户认证
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '用户未认证' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json() as DreamInterpreteRequest
 
     // 验证必填字段
@@ -35,6 +48,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: '请选择梦境情绪' },
         { status: 400 }
+      )
+    }
+
+    // 检查用户天机点余额
+    const serviceCost = 80 // 解梦分析消耗80天机点
+    const hasEnoughPoints = await TianjiPointsService.hasEnoughPoints(user.id, serviceCost)
+    
+    if (!hasEnoughPoints) {
+      return NextResponse.json(
+        { 
+          error: '天机点余额不足',
+          required_points: serviceCost,
+          service_type: 'dream'
+        },
+        { status: 402 }
       )
     }
 
@@ -73,9 +101,54 @@ export async function POST(request: NextRequest) {
 
     // 生成AI深度解读
     const aiInterpretation = await generateAIInterpretation(body, dreamAnalysis)
+    
+    // 临时调试日志
+    console.log('🔍 API Debug - aiInterpretation type:', typeof aiInterpretation)
+    console.log('🔍 API Debug - aiInterpretation preview:', typeof aiInterpretation === 'string' ? aiInterpretation.substring(0, 200) : 'NOT STRING')
 
     // 计算服务费用（80天机点）
     const cost = 80
+
+    // 保存到数据库
+    try {
+      const { data: dreamRecord, error: saveError } = await supabase
+        .from('dream_interpretations')
+        .insert({
+          user_id: user.id,
+          dream_content: body.dream_content,
+          dream_category: body.dream_category,
+          dream_mood: body.dream_mood,
+          dream_frequency: body.dream_frequency || 'occasional',
+          lucid_dream: body.lucid_dream || false,
+          dreamer_age_range: body.dreamer_info?.age_range || null,
+          dreamer_gender: body.dreamer_info?.gender || null,
+          dreamer_life_stage: body.dreamer_info?.life_stage || null,
+          recent_stress: body.dreamer_info?.recent_stress || false,
+          interpretation_result: dreamAnalysis,
+          ai_analysis: typeof aiInterpretation === 'string' ? aiInterpretation : JSON.stringify(aiInterpretation),
+          points_cost: cost
+        })
+        .select()
+        .single()
+
+      if (saveError) {
+        console.error('Error saving dream interpretation:', saveError)
+        // 继续处理，不要因为保存失败就返回错误
+      }
+
+      // 扣除天机点
+      if (!saveError) {
+        await TianjiPointsService.consumePoints(
+          user.id, 
+          cost, 
+          'dream_interpretation',
+          `梦境解析 - ${body.dream_content.substring(0, 30)}${body.dream_content.length > 30 ? '...' : ''}`
+        )
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+      // 记录错误但不影响返回结果
+    }
 
     const response = {
       success: true,

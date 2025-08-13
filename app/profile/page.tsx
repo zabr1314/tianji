@@ -38,7 +38,7 @@ export default function ProfilePage() {
     }
 
     loadUser()
-  }, [])
+  }, [supabase.auth])
 
   const handleSave = async () => {
     if (!user) return

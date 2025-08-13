@@ -37,15 +37,15 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
   const fortuneLevel = FORTUNE_LEVELS[fortune.level]
   
   const getScoreIcon = (score: number) => {
-    if (score >= 70) return <TrendingUp className="h-4 w-4 text-green-600" />
-    if (score >= 40) return <Minus className="h-4 w-4 text-yellow-600" />
-    return <TrendingDown className="h-4 w-4 text-red-600" />
+    if (score >= 70) return <TrendingUp className="h-4 w-4 text-red-600" />
+    if (score >= 40) return <Minus className="h-4 w-4 text-amber-700" />
+    return <TrendingDown className="h-4 w-4 text-gray-800" />
   }
   
   const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-green-600'
-    if (score >= 40) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 70) return 'text-red-600'
+    if (score >= 40) return 'text-amber-700'
+    return 'text-gray-800'
   }
 
   return (
@@ -88,7 +88,7 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
               <div className="flex items-center space-x-2">
-                <Wallet className="h-4 w-4 text-green-600" />
+                <Wallet className="h-4 w-4 text-emerald-700" />
                 <span className="text-sm">财运</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -101,7 +101,7 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
             
             <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
               <div className="flex items-center space-x-2">
-                <Heart className="h-4 w-4 text-pink-600" />
+                <Heart className="h-4 w-4 text-red-600" />
                 <span className="text-sm">感情</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -114,7 +114,7 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
             
             <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
               <div className="flex items-center space-x-2">
-                <Briefcase className="h-4 w-4 text-blue-600" />
+                <Briefcase className="h-4 w-4 text-gray-700" />
                 <span className="text-sm">事业</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -127,7 +127,7 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
             
             <div className="flex items-center justify-between p-3 rounded-lg bg-background/50">
               <div className="flex items-center space-x-2">
-                <Activity className="h-4 w-4 text-orange-600" />
+                <Activity className="h-4 w-4 text-amber-700" />
                 <span className="text-sm">健康</span>
               </div>
               <div className="flex items-center space-x-2">
@@ -174,7 +174,7 @@ export function FortuneCard({ fortune, selectedDate }: FortuneCardProps) {
                   <Badge 
                     key={index} 
                     variant="secondary" 
-                    className="text-xs bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+                    className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
                   >
                     {activity}
                   </Badge>

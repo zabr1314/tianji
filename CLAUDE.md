@@ -89,6 +89,12 @@ DEEPSEEK_API_KEY=[DeepSeek API Key]
 - `/lib/supabase/middleware.ts` - Session management middleware
 - Always create new server clients within functions using `await createClient()` (important for Fluid compute)
 
+**Service Layer Pattern:**
+- Database operations abstracted into service classes in `/lib/database/services.ts`
+- `TianjiPointsService` - Handles all points-related operations (balance, spending, transactions)
+- `AnalysisRecordsService` - Manages aggregated history records across all analysis types
+- Each service validates authentication and permissions before database operations
+
 **Authentication Flow:**
 - Cookie-based auth that works across Client Components, Server Components, Route Handlers, Server Actions, and Middleware
 - Protected routes under `/app/protected/`
@@ -98,9 +104,11 @@ DEEPSEEK_API_KEY=[DeepSeek API Key]
 **UI Component System:**
 - shadcn/ui components in `/components/ui/` with Radix UI primitives
 - Custom components in `/components/` (navbar, forms, etc.)
-- Consistent amber/slate color scheme throughout
+- Analysis result components in `/components/modules/` (BaziResult, HepanResult, GenericAnalysisResult, etc.)
+- Consistent amber/slate color scheme throughout with Song Dynasty aesthetic for dream analysis
 - Full light/dark theme support via next-themes
 - Responsive design with mobile-first approach
+- ReactMarkdown with custom styling for AI-generated content display
 
 **Database Architecture:**
 - Separate specialized tables for each analysis type:
@@ -115,10 +123,13 @@ DEEPSEEK_API_KEY=[DeepSeek API Key]
 - History aggregation service combines all analysis types into unified history view
 
 **API Route Structure:**
-- `/api/[service]/analyze` - Analysis endpoints for each service
+- `/api/[service]/analyze` - Analysis endpoints for each service (bazi, hepan, bugua, calendar, name, dream)
 - `/api/history/*` - Aggregated history management across all analysis types
+  - `/api/history/records` - GET (list), DELETE (batch delete)
+  - `/api/history/records/[id]` - GET (detail), PUT (update), DELETE (single)
 - `/api/points/*` - Tianji points balance and transactions
 - All APIs use proper Supabase server client with `await createClient()`
+- History APIs aggregate data from multiple tables and handle different data formats
 
 ## Core Feature Modules
 
@@ -187,9 +198,11 @@ The platform uses a "天机点" (Tianji Points) virtual credit system:
 **Critical Implementation Details:**
 - Always use `await createClient()` for Supabase server clients in API routes
 - History records are aggregated from multiple specialized tables, not a single `analysis_records` table
-- Points system uses database RPC functions for transactions
+- Points system uses database RPC functions for transactions via `TianjiPointsService` class
 - User display names fallback: `user.user_metadata?.full_name || user.email?.split('@')[0] || '用户'`
 - All analysis APIs should validate user authentication and sufficient points before processing
+- AI analysis content can be stored as either strings or objects - always handle both types in history APIs
+- Dream analysis uses specialized enums and interfaces defined in `/lib/dream/calculator.ts`
 
 **Security:**
 - Never expose DEEPSEEK_API_KEY in client-side code

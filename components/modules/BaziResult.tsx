@@ -280,7 +280,11 @@ export function BaziResult({
 
     return (
       <div className="space-y-6">
-        {sectionData.map((section, index) => renderTraditionalAIBlock(section.title, section.content))}
+        {sectionData.map((section, index) => (
+          <div key={index}>
+            {renderTraditionalAIBlock(section.title, section.content)}
+          </div>
+        ))}
       </div>
     )
   }
@@ -416,12 +420,12 @@ export function BaziResult({
                         cx="56" cy="56" r="48"
                         fill="none" stroke="#cbd5e1" strokeWidth="8"
                       />
-                      {wuxingAnalysis.percentages && renderCircularChart(wuxingAnalysis.percentages, 48, 56, 8)}
+                      {wuxingAnalysis?.percentages && renderCircularChart(wuxingAnalysis.percentages, 48, 56, 8)}
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-lg font-serif font-bold text-slate-700 dark:text-slate-300">
-                          {wuxingAnalysis.percentages ? Math.max(...Object.values(wuxingAnalysis.percentages)).toFixed(0) : '0'}%
+                          {wuxingAnalysis?.percentages ? Math.max(...Object.values(wuxingAnalysis.percentages)).toFixed(0) : '0'}%
                         </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">最旺</div>
                       </div>
@@ -434,7 +438,7 @@ export function BaziResult({
               <div className="bg-white dark:bg-slate-900 p-5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">五行分布</h4>
                 <div className="space-y-4">
-                  {wuxingAnalysis.percentages && Object.entries(wuxingAnalysis.percentages).map(([element, percentage]) => {
+                  {wuxingAnalysis?.percentages && Object.entries(wuxingAnalysis.percentages).map(([element, percentage]) => {
                     const isStrongest = element === wuxingAnalysis.strongest
                     const isWeakest = element === wuxingAnalysis.weakest
                     const count = (wuxingAnalysis as any)[element]

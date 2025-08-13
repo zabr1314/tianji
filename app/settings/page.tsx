@@ -58,7 +58,7 @@ export default function SettingsPage() {
     }
 
     loadUser()
-  }, [])
+  }, [supabase.auth])
 
   const loadUserSettings = async (userId: string) => {
     try {

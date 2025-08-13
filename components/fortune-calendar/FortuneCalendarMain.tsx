@@ -86,21 +86,29 @@ export function FortuneCalendarMain({
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center space-x-3 mb-4">
-          <div className="w-12 h-12 bg-amber-600 dark:bg-amber-700 rounded-lg flex items-center justify-center">
-            <Calendar className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-200">
+      <div className="text-center mb-12">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-5xl font-serif font-bold mb-6 text-teal-700">
             个人运势日历
-          </h1>
+          </h2>
+          <div className="w-24 h-px bg-teal-400 mx-auto mb-6"></div>
+          <p className="text-xl font-serif leading-relaxed text-gray-600 max-w-3xl mx-auto mb-8">
+            {hasPersonalInfo 
+              ? '基于您的生辰八字，查看每日专属运势变化，把握时运流转' 
+              : '查看每日运势参考，填写个人信息获得更精准的专属分析'
+            }
+          </p>
+          <div className="flex justify-center items-center space-x-6 text-sm text-gray-500">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4" />
+              <span>每日运势</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Sparkles className="h-4 w-4" />
+              <span>运势分析</span>
+            </div>
+          </div>
         </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          {hasPersonalInfo 
-            ? '基于您的生辰八字，查看每日专属运势变化' 
-            : '查看每日运势参考，填写个人信息获得更精准的专属分析'
-          }
-        </p>
       </div>
 
       {/* 主要内容区域 */}
@@ -108,11 +116,11 @@ export function FortuneCalendarMain({
         {/* 日历视图 */}
         <div className="lg:col-span-2 order-2 lg:order-1 space-y-6">
           {isLoading ? (
-            <Card className="w-full">
+            <Card className="w-full border border-gray-200 bg-white/95">
               <CardContent className="flex items-center justify-center py-16">
                 <div className="text-center space-y-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
-                  <p className="text-muted-foreground">正在加载运势数据...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+                  <p className="text-teal-700 font-serif">正在加载运势数据...</p>
                 </div>
               </CardContent>
             </Card>
@@ -127,26 +135,26 @@ export function FortuneCalendarMain({
               />
               
               {/* 本月运势趋势图 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <Sparkles className="h-5 w-5" />
-                    <span>本月运势趋势</span>
+              <Card className="border border-gray-200 bg-white/95">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-serif font-bold text-teal-700 mb-2">
+                    本月运势趋势
                   </CardTitle>
+                  <div className="w-16 h-px bg-teal-400 mx-auto"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {/* 运势分布条形图 */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-green-600 font-medium">大吉 🟢</span>
+                        <span className="text-sm text-red-600 font-medium">大吉 🔴</span>
                         <span className="text-sm text-muted-foreground">
                           {dailyFortunes.filter(f => f.level === 'excellent').length} 天
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-green-500 h-2 rounded-full" 
+                          className="bg-red-600 h-2 rounded-full" 
                           style={{
                             width: `${(dailyFortunes.filter(f => f.level === 'excellent').length / dailyFortunes.length) * 100}%`
                           }}
@@ -154,14 +162,14 @@ export function FortuneCalendarMain({
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-600 font-medium">吉 🔵</span>
+                        <span className="text-sm text-emerald-700 font-medium">吉 🟢</span>
                         <span className="text-sm text-muted-foreground">
                           {dailyFortunes.filter(f => f.level === 'good').length} 天
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-500 h-2 rounded-full" 
+                          className="bg-emerald-700 h-2 rounded-full" 
                           style={{
                             width: `${(dailyFortunes.filter(f => f.level === 'good').length / dailyFortunes.length) * 100}%`
                           }}
@@ -169,14 +177,14 @@ export function FortuneCalendarMain({
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-yellow-600 font-medium">平 🟡</span>
+                        <span className="text-sm text-amber-700 font-medium">平 🟤</span>
                         <span className="text-sm text-muted-foreground">
                           {dailyFortunes.filter(f => f.level === 'average').length} 天
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-yellow-500 h-2 rounded-full" 
+                          className="bg-amber-700 h-2 rounded-full" 
                           style={{
                             width: `${(dailyFortunes.filter(f => f.level === 'average').length / dailyFortunes.length) * 100}%`
                           }}
@@ -184,14 +192,14 @@ export function FortuneCalendarMain({
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-red-600 font-medium">谨慎 🔴</span>
+                        <span className="text-sm text-gray-800 font-medium">谨慎 ⚫</span>
                         <span className="text-sm text-muted-foreground">
                           {dailyFortunes.filter(f => f.level === 'poor').length} 天
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-red-500 h-2 rounded-full" 
+                          className="bg-gray-800 h-2 rounded-full" 
                           style={{
                             width: `${(dailyFortunes.filter(f => f.level === 'poor').length / dailyFortunes.length) * 100}%`
                           }}
@@ -200,8 +208,8 @@ export function FortuneCalendarMain({
                     </div>
                     
                     {/* 重要日期提醒 */}
-                    <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border-l-4 border-amber-400">
-                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2">
+                    <div className="mt-6 p-4 bg-teal-50 rounded-lg border-l-4 border-teal-400">
+                      <h4 className="font-serif font-semibold text-teal-700 mb-2">
                         📅 重要日期提醒
                       </h4>
                       <div className="space-y-2 text-sm">
@@ -214,7 +222,7 @@ export function FortuneCalendarMain({
                           if (excellentDays.length > 0) {
                             return (
                               <div className="flex items-center space-x-2">
-                                <span className="text-green-600">🟢</span>
+                                <span className="text-gray-800">⚫</span>
                                 <span className="text-muted-foreground">
                                   最佳日期：{excellentDays.join('日、')}日，适合重要决策
                                 </span>
@@ -240,7 +248,7 @@ export function FortuneCalendarMain({
                           
                           return (
                             <div className="flex items-center space-x-2">
-                              <span className="text-blue-600">🔵</span>
+                              <span className="text-emerald-700">🟢</span>
                               <span className="text-muted-foreground">
                                 本月运势平稳，保持积极心态
                               </span>
@@ -254,12 +262,12 @@ export function FortuneCalendarMain({
               </Card>
               
               {/* 周运势预览 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <Calendar className="h-5 w-5" />
-                    <span>本周运势预览</span>
+              <Card className="border border-gray-200 bg-white/95">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-serif font-bold text-teal-700 mb-2">
+                    本周运势预览
                   </CardTitle>
+                  <div className="w-16 h-px bg-teal-400 mx-auto"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-7 gap-2">
@@ -286,22 +294,22 @@ export function FortuneCalendarMain({
                             key={index} 
                             className={`
                               text-center p-3 rounded-lg transition-all cursor-pointer
-                              ${isToday ? 'bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400' : 'bg-muted hover:bg-muted/80'}
+                              ${isToday ? 'bg-teal-100 border-2 border-teal-400' : 'bg-white/80 hover:bg-gray-100/80 border border-gray-200'}
                             `}
                             onClick={() => setSelectedDate(dateString)}
                           >
                             <div className="text-xs text-muted-foreground mb-1">
                               {dayNames[index]}
                             </div>
-                            <div className={`text-lg font-semibold ${isToday ? 'text-amber-600' : ''}`}>
+                            <div className={`text-lg font-semibold ${isToday ? 'text-teal-600' : ''}`}>
                               {date.getDate()}
                             </div>
                             <div className="mt-1">
                               {fortune && (
                                 <span className="text-lg">
-                                  {fortune.level === 'excellent' ? '🟢' :
-                                   fortune.level === 'good' ? '🔵' :
-                                   fortune.level === 'average' ? '🟡' : '🔴'}
+                                  {fortune.level === 'excellent' ? '⚫' :
+                                   fortune.level === 'good' ? '🟢' :
+                                   fortune.level === 'average' ? '🟤' : '🔴'}
                                 </span>
                               )}
                             </div>
@@ -319,12 +327,12 @@ export function FortuneCalendarMain({
               </Card>
 
               {/* 本月吉日推荐 */}
-              <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center space-x-2">
-                    <Sparkles className="h-5 w-5 text-purple-600" />
-                    <span>本月吉日推荐</span>
+              <Card className="bg-gradient-to-r from-teal-50 to-green-50 border-gray-200">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-serif font-bold text-teal-700 mb-2">
+                    本月吉日推荐
                   </CardTitle>
+                  <div className="w-16 h-px bg-teal-400 mx-auto"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -345,10 +353,10 @@ export function FortuneCalendarMain({
                         <div 
                           key={index}
                           onClick={() => setSelectedDate(fortune.date)}
-                          className="flex items-center justify-between p-3 bg-white/50 dark:bg-purple-900/20 rounded-lg cursor-pointer hover:bg-white/70 dark:hover:bg-purple-900/30 transition-colors"
+                          className="flex items-center justify-between p-3 bg-white/70 rounded-lg cursor-pointer hover:bg-white/90 transition-colors border border-gray-100"
                         >
                           <div className="flex items-center space-x-3">
-                            <span className="text-xl">🟢</span>
+                            <span className="text-xl">⚫</span>
                             <div>
                               <div className="font-semibold">
                                 {new Date(fortune.date).toLocaleDateString('zh-CN', {
@@ -356,12 +364,12 @@ export function FortuneCalendarMain({
                                   day: 'numeric'
                                 })}
                               </div>
-                              <div className="text-xs text-purple-600 dark:text-purple-300">
+                              <div className="text-xs font-serif text-teal-600">
                                 适宜：{fortune.suitableActivities.slice(0, 2).join('、')}
                               </div>
                             </div>
                           </div>
-                          <div className="text-lg font-bold text-green-600">{fortune.score}分</div>
+                          <div className="text-lg font-bold text-gray-800">{fortune.score}分</div>
                         </div>
                       ))
                     })()}
@@ -400,30 +408,30 @@ export function FortuneCalendarMain({
       </div>
 
       {/* 使用说明 */}
-      <Card className="mt-8 bg-slate-50 dark:bg-slate-900/50">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-lg">
-            <Sparkles className="h-5 w-5" />
-            <span>使用说明</span>
+      <Card className="mt-8 bg-white/80 border-gray-200">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-serif font-bold text-teal-700 mb-2">
+            使用说明
           </CardTitle>
+          <div className="w-16 h-px bg-teal-400 mx-auto"></div>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-4 text-sm">
             <div>
-              <h4 className="font-semibold mb-2">🗓️ 日历查看</h4>
-              <p className="text-muted-foreground">
+              <h4 className="font-serif font-semibold mb-2 text-teal-700">🗓️ 日历查看</h4>
+              <p className="font-serif text-gray-600">
                 点击日历上的任意日期，查看当日详细运势分析和建议
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">🎯 运势等级</h4>
-              <p className="text-muted-foreground">
-                🟢大吉 🔵吉 🟡平 🔴谨慎，一目了然掌握每日运势变化
+              <h4 className="font-serif font-semibold mb-2 text-teal-700">🎯 运势等级</h4>
+              <p className="font-serif text-gray-600">
+                ⚫大吉 🟢吉 🟤平 🔴谨慎，一目了然掌握每日运势变化
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">✨ 个性化升级</h4>
-              <p className="text-muted-foreground">
+              <h4 className="font-serif font-semibold mb-2 text-teal-700">✨ 个性化升级</h4>
+              <p className="font-serif text-gray-600">
                 填写生辰信息，获得基于个人八字的精准运势分析
               </p>
             </div>

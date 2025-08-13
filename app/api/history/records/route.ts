@@ -88,7 +88,7 @@ function getRecordTitle(record: any, type: string): string {
     case 'name':
       return `姓名分析 - ${record.name}`
     case 'dream':
-      return `解梦 - ${record.dream_content?.substring(0, 20) || '未知梦境'}`
+      return `解梦 - ${record.dream_content?.substring(0, 20) || '未知梦境'}${record.dream_content?.length > 20 ? '...' : ''}`
     default:
       return '未知分析'
   }
@@ -96,8 +96,23 @@ function getRecordTitle(record: any, type: string): string {
 
 // 根据记录类型生成摘要
 function getRecordSummary(record: any, type: string): string {
-  const result = record.analysis_result || record.interpretation_result || record.divination_result || record.fortune_result || ''
-  return typeof result === 'string' ? result.substring(0, 100) + '...' : ''
+  let result = ''
+  
+  // 根据不同类型获取摘要
+  switch (type) {
+    case 'dream':
+      // 对于梦境解析，优先使用AI分析的前100字符作为摘要
+      result = record.ai_analysis || record.interpretation_result || ''
+      break
+    default:
+      result = record.analysis_result || record.interpretation_result || record.divination_result || record.fortune_result || ''
+  }
+  
+  if (typeof result === 'string' && result.trim()) {
+    // 只在内容被截断时添加省略号
+    return result.length > 100 ? result.substring(0, 100) + '...' : result
+  }
+  return ''
 }
 
 // 获取输入数据
@@ -144,8 +159,25 @@ function getInputData(record: any, type: string): any {
 
 // 获取输出数据
 function getOutputData(record: any, type: string): any {
+  let result = ''
+  let ai_analysis = ''
+  
+  // 根据不同类型获取结果字段
+  switch (type) {
+    case 'dream':
+      // 对于梦境解析，分别获取AI分析和整体结果
+      // 确保ai_analysis是字符串类型
+      ai_analysis = typeof record.ai_analysis === 'string' ? record.ai_analysis : 
+        (typeof record.ai_analysis === 'object' && record.ai_analysis ? JSON.stringify(record.ai_analysis) : '')
+      result = record.interpretation_result || ai_analysis || ''
+      break
+    default:
+      result = record.analysis_result || record.interpretation_result || record.divination_result || record.fortune_result || ''
+  }
+  
   return {
-    result: record.analysis_result || record.interpretation_result || record.divination_result || record.fortune_result || '',
+    result,
+    ai_analysis, // 专门为梦境解析添加ai_analysis字段
     created_at: record.created_at
   }
 }

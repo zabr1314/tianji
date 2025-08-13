@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { NameAnalysisCalculator } from '@/lib/name/calculator'
+import { TianjiPointsService, AnalysisRecordsService } from '@/lib/database/services'
 import OpenAI from 'openai'
 
 // 初始化DeepSeek客户端
@@ -19,6 +21,17 @@ interface NameAnalyzeRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户认证
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: '用户未认证' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json() as NameAnalyzeRequest
 
     // 验证必填字段
@@ -26,6 +39,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: '请输入要分析的姓名' },
         { status: 400 }
+      )
+    }
+
+    // 检查用户天机点余额
+    const serviceCost = 120 // 姓名分析消耗120天机点
+    const hasEnoughPoints = await TianjiPointsService.hasEnoughPoints(user.id, serviceCost)
+    
+    if (!hasEnoughPoints) {
+      return NextResponse.json(
+        { 
+          error: '天机点余额不足',
+          required_points: serviceCost,
+          service_type: 'name'
+        },
+        { status: 402 }
       )
     }
 

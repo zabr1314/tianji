@@ -31,38 +31,38 @@ export interface UserBirthInfo {
   gender: 'male' | 'female'
 }
 
-// 运势等级对应的颜色和标记
+// 运势等级对应的颜色和标记（宋代五行美学配色）
 export const FORTUNE_LEVELS = {
   excellent: {
-    color: 'bg-green-500',
-    textColor: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
+    color: 'bg-red-600',
+    textColor: 'text-red-600',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-400',
     label: '大吉',
-    emoji: '🟢'
+    emoji: '🔴'
   },
   good: {
-    color: 'bg-blue-500', 
-    textColor: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    color: 'bg-emerald-700', 
+    textColor: 'text-emerald-700',
+    bgColor: 'bg-emerald-50',
+    borderColor: 'border-emerald-400',
     label: '吉',
-    emoji: '🔵'
+    emoji: '🟢'
   },
   average: {
-    color: 'bg-yellow-500',
-    textColor: 'text-yellow-600', 
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-200',
+    color: 'bg-amber-700',
+    textColor: 'text-amber-700', 
+    bgColor: 'bg-amber-50',
+    borderColor: 'border-amber-400',
     label: '平',
-    emoji: '🟡'
+    emoji: '🟤'
   },
   poor: {
-    color: 'bg-red-500',
-    textColor: 'text-red-600',
-    bgColor: 'bg-red-50', 
-    borderColor: 'border-red-200',
+    color: 'bg-gray-800',
+    textColor: 'text-gray-800',
+    bgColor: 'bg-gray-50', 
+    borderColor: 'border-gray-400',
     label: '谨慎',
-    emoji: '🔴'
+    emoji: '⚫'
   }
 } as const

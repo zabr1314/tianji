@@ -307,11 +307,16 @@ export class HepanCalculator {
       let compatibility = 0
       
       // 比较大运天干地支
-      if (this.checkTianganHe(currentDayun1.tiangan, currentDayun2.tiangan)) {
+      const tiangan1 = currentDayun1.ganzhi.charAt(0)
+      const dizhi1 = currentDayun1.ganzhi.charAt(1)
+      const tiangan2 = currentDayun2.ganzhi.charAt(0)
+      const dizhi2 = currentDayun2.ganzhi.charAt(1)
+      
+      if (this.checkTianganHe(tiangan1, tiangan2)) {
         compatibility += 30
       }
       
-      if (this.checkDizhiHe(currentDayun1.dizhi, currentDayun2.dizhi)) {
+      if (this.checkDizhiHe(dizhi1, dizhi2)) {
         compatibility += 30  
       }
       
@@ -322,8 +327,8 @@ export class HepanCalculator {
       ]
       
       const isChong = chong.some(pair =>
-        (pair[0] === currentDayun1.dizhi && pair[1] === currentDayun2.dizhi) ||
-        (pair[1] === currentDayun1.dizhi && pair[0] === currentDayun2.dizhi)
+        (pair[0] === dizhi1 && pair[1] === dizhi2) ||
+        (pair[1] === dizhi1 && pair[0] === dizhi2)
       )
       
       if (isChong) compatibility -= 20

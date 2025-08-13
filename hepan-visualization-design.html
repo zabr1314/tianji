@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合盘分析可视化设计图</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(45deg, #fef7ed, #fef3e2, #fdf2f8, #fef7ed);
+            min-height: 100vh;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(203, 213, 225, 0.3);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: #f59e0b;
+        }
+
+        /* 顶部总览区 */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .score-display {
+            text-align: center;
+            position: relative;
+        }
+
+        .circular-progress {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring__circle {
+            stroke-dasharray: 565.48;
+            stroke-dashoffset: 282.74;
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+            stroke: #f59e0b;
+            stroke-width: 8;
+            fill: transparent;
+            r: 90;
+            cx: 100;
+            cy: 100;
+        }
+
+        .progress-ring__background {
+            stroke: #e2e8f0;
+            stroke-width: 8;
+            fill: transparent;
+            r: 90;
+            cx: 100;
+            cy: 100;
+        }
+
+        .score-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+
+        .score-label {
+            background: #475569;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .radar-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        /* 详细评分卡片 */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .score-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-card-title {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .score-card-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #f59e0b;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 3px;
+            transition: width 1s ease-out;
+        }
+
+        /* 八字对比区 */
+        .bazi-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .bazi-chart {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .person-name {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .bazi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .bazi-cell {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .bazi-cell.year { background: #fef3c7; }
+        .bazi-cell.month { background: #dcfce7; }
+        .bazi-cell.day { background: #dbeafe; }
+        .bazi-cell.hour { background: #f3e8ff; }
+
+        .connection-lines {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .connection-line {
+            width: 60px;
+            height: 3px;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .connection-line.positive {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .connection-line.negative {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .connection-line.neutral {
+            background: linear-gradient(90deg, #6b7280, #4b5563);
+        }
+
+        .connection-label {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        /* 时间轴 */
+        .timeline-container {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e2e8f0, #f59e0b, #e2e8f0);
+            transform: translateY(-50%);
+        }
+
+        .timeline-item {
+            background: white;
+            border: 3px solid #f59e0b;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-year {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .timeline-score {
+            font-size: 10px;
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        /* 图例和标签 */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .overview-grid,
+            .bazi-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .scores-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .demo-note {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #92400e;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-note">
+            🎨 合盘分析可视化设计方案预览 - 这是一个设计原型图，展示了增强版的可视化界面
+        </div>
+
+        <!-- 顶部总览区 -->
+        <div class="section">
+            <h2 class="section-title">综合匹配度总览</h2>
+            <div class="overview-grid">
+                <div class="score-display">
+                    <div class="circular-progress">
+                        <svg class="progress-ring" width="200" height="200">
+                            <circle class="progress-ring__background" />
+                            <circle class="progress-ring__circle" />
+                        </svg>
+                        <div class="score-number">85</div>
+                    </div>
+                    <div class="score-label">匹配度极佳</div>
+                </div>
+                <div class="radar-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 详细评分区 -->
+        <div class="section">
+            <h2 class="section-title">五维度详细评分</h2>
+            <div class="scores-grid">
+                <div class="score-card">
+                    <div class="score-card-title">感情和谐</div>
+                    <div class="score-card-value">88</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 88%"></div>
+                    </div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-title">事业配合</div>
+                    <div class="score-card-value">72</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 72%"></div>
+                    </div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-title">财运互补</div>
+                    <div class="score-card-value">85</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-title">健康相助</div>
+                    <div class="score-card-value">79</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 79%"></div>
+                    </div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-title">家庭和睦</div>
+                    <div class="score-card-value">91</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 91%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 八字对比区 -->
+        <div class="section">
+            <h2 class="section-title">八字排盘对比分析</h2>
+            <div class="bazi-comparison">
+                <div class="bazi-chart">
+                    <div class="person-name">张三 (男)</div>
+                    <div class="bazi-grid">
+                        <div class="bazi-cell year">甲子</div>
+                        <div class="bazi-cell month">丙寅</div>
+                        <div class="bazi-cell day">戊辰</div>
+                        <div class="bazi-cell hour">庚申</div>
+                        <div class="bazi-cell year">木水</div>
+                        <div class="bazi-cell month">火木</div>
+                        <div class="bazi-cell day">土土</div>
+                        <div class="bazi-cell hour">金金</div>
+                    </div>
+                </div>
+                
+                <div class="connection-lines">
+                    <div class="connection-line positive">
+                        <div class="connection-label">年柱相合</div>
+                    </div>
+                    <div class="connection-line neutral">
+                        <div class="connection-label">月柱平和</div>
+                    </div>
+                    <div class="connection-line positive">
+                        <div class="connection-label">日柱相助</div>
+                    </div>
+                    <div class="connection-line negative">
+                        <div class="connection-label">时柱相冲</div>
+                    </div>
+                </div>
+
+                <div class="bazi-chart">
+                    <div class="person-name">李四 (女)</div>
+                    <div class="bazi-grid">
+                        <div class="bazi-cell year">乙丑</div>
+                        <div class="bazi-cell month">丁卯</div>
+                        <div class="bazi-cell day">己巳</div>
+                        <div class="bazi-cell hour">辛酉</div>
+                        <div class="bazi-cell year">木土</div>
+                        <div class="bazi-cell month">火木</div>
+                        <div class="bazi-cell day">土火</div>
+                        <div class="bazi-cell hour">金金</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(90deg, #10b981, #059669)"></div>
+                    <span>相生相合</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(90deg, #6b7280, #4b5563)"></div>
+                    <span>平和中性</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(90deg, #ef4444, #dc2626)"></div>
+                    <span>相冲相克</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 大运时间轴 -->
+        <div class="section">
+            <h2 class="section-title">未来十年大运配合分析</h2>
+            <div class="timeline-container">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-year">2024</div>
+                        <div class="timeline-score">85分</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2026</div>
+                        <div class="timeline-score">78分</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2028</div>
+                        <div class="timeline-score">92分</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2030</div>
+                        <div class="timeline-score">88分</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2032</div>
+                        <div class="timeline-score">76分</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2034</div>
+                        <div class="timeline-score">89分</div>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; color: #64748b; margin-top: 16px;">
+                📈 2028年为最佳配合年份，建议重要决策可在此时考虑
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 圆形进度条动画
+        function animateCircularProgress() {
+            const circle = document.querySelector('.progress-ring__circle');
+            const score = 85; // 示例分数
+            const circumference = 2 * Math.PI * 90;
+            const offset = circumference - (score / 100) * circumference;
+            
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = circumference;
+            
+            setTimeout(() => {
+                circle.style.strokeDashoffset = offset;
+            }, 500);
+        }
+
+        // 雷达图
+        function createRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['感情和谐', '事业配合', '财运互补', '健康相助', '家庭和睦'],
+                    datasets: [{
+                        label: '男方',
+                        data: [85, 70, 88, 75, 92],
+                        borderColor: 'rgba(59, 130, 246, 0.8)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderColor: 'white',
+                        pointHoverBackgroundColor: 'white',
+                        pointHoverBorderColor: 'rgba(59, 130, 246, 1)'
+                    }, {
+                        label: '女方',
+                        data: [90, 74, 82, 83, 89],
+                        borderColor: 'rgba(236, 72, 153, 0.8)',
+                        backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                        pointBackgroundColor: 'rgba(236, 72, 153, 1)',
+                        pointBorderColor: 'white',
+                        pointHoverBackgroundColor: 'white',
+                        pointHoverBorderColor: 'rgba(236, 72, 153, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: 'rgba(203, 213, 225, 0.5)'
+                            },
+                            angleLines: {
+                                color: 'rgba(203, 213, 225, 0.5)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#475569',
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载后执行动画
+        document.addEventListener('DOMContentLoaded', function() {
+            animateCircularProgress();
+            createRadarChart();
+        });
+    </script>
+</body>
+</html>

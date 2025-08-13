@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Sparkles, Coins, Clock, Zap, RefreshCw, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
+import { CoinFlipAnimation, SimpleCoin } from '@/components/ui/coin-flip-animation'
 
 interface BuguaResult {
   success: boolean
@@ -64,6 +65,7 @@ export default function BuguaPage() {
   const [coinResults, setCoinResults] = useState<number[]>([])
   const [currentCoinThrow, setCurrentCoinThrow] = useState(0)
   const [isThrowingCoins, setIsThrowingCoins] = useState(false)
+  const [shouldResetCoins, setShouldResetCoins] = useState(false)
   const [result, setResult] = useState<BuguaResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -107,22 +109,26 @@ export default function BuguaPage() {
 
   const handleCoinThrow = () => {
     if (currentCoinThrow >= 6) return
-
-    setIsThrowingCoins(true)
     
-    // 模拟投币动画
-    setTimeout(() => {
-      const headsCount = Math.floor(Math.random() * 4) // 0-3个正面
-      const newResults = [...coinResults, headsCount]
-      setCoinResults(newResults)
-      setCurrentCoinThrow(currentCoinThrow + 1)
-      setIsThrowingCoins(false)
-    }, 1000)
+    // 开始新的投币时重置硬币状态
+    setShouldResetCoins(true)
+    setTimeout(() => setShouldResetCoins(false), 100) // 短暂重置后恢复
+    
+    setIsThrowingCoins(true)
+  }
+
+  const handleFlipComplete = (result: number) => {
+    const newResults = [...coinResults, result]
+    setCoinResults(newResults)
+    setCurrentCoinThrow(currentCoinThrow + 1)
+    setIsThrowingCoins(false)
   }
 
   const resetCoins = () => {
     setCoinResults([])
     setCurrentCoinThrow(0)
+    setShouldResetCoins(true)
+    setTimeout(() => setShouldResetCoins(false), 100)
   }
 
   const handleAnalyze = async () => {
@@ -325,70 +331,96 @@ export default function BuguaPage() {
 
                     {/* 硬币占卜界面 - 宋代美学风格 */}
                     {method === 'coins' && (
-                      <Card className="bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                      <Card className="bg-gradient-to-br from-slate-50/80 to-amber-50/50 dark:from-slate-800/80 dark:to-amber-950/20 border border-amber-200 dark:border-amber-700/50 shadow-lg">
                         <CardHeader className="text-center">
-                          <CardTitle className="text-lg font-serif font-bold text-slate-700 dark:text-slate-300">硬币占卜法</CardTitle>
-                          <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto my-2"></div>
-                          <CardDescription className="font-serif text-slate-600 dark:text-slate-400">
+                          <CardTitle className="text-2xl font-serif font-bold text-amber-800 dark:text-amber-200">硬币占卜法</CardTitle>
+                          <div className="w-20 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent mx-auto my-3"></div>
+                          <CardDescription className="font-serif text-slate-700 dark:text-slate-300 text-base">
                             需要进行6次投币，每次投掷3枚硬币。请专心致志，心中默念问题。
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                          <div className="text-center space-y-4">
-                            <div className="text-2xl font-bold">
+                        <CardContent className="space-y-6">
+                          <div className="text-center">
+                            <div className="text-2xl font-serif font-bold text-amber-800 dark:text-amber-200 mb-4">
                               第 {currentCoinThrow + 1} 次投币
                               {currentCoinThrow >= 6 ? ' - 已完成' : ''}
                             </div>
-                            
+                          </div>
+                          
+                          {/* 3D硬币翻转动画 */}
+                          <div className="min-h-[200px] relative bg-white/50 dark:bg-slate-800/30 rounded-xl border border-amber-200/50 dark:border-amber-700/30 backdrop-blur-sm">
+                            {(isThrowingCoins || coinResults.length > 0) ? (
+                              <CoinFlipAnimation 
+                                isFlipping={isThrowingCoins}
+                                coinResults={coinResults}
+                                currentThrow={currentCoinThrow}
+                                onFlipComplete={handleFlipComplete}
+                                shouldReset={shouldResetCoins}
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-48 text-slate-500 dark:text-slate-400 font-serif">
+                                {currentCoinThrow >= 6 ? '投币已完成，可以开始卜卦' : '点击下方按钮开始投币'}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* 操作按钮 */}
+                          <div className="text-center">
                             {currentCoinThrow < 6 ? (
                               <Button
                                 onClick={handleCoinThrow}
                                 disabled={isThrowingCoins}
                                 size="lg"
-                                className="bg-amber-600 hover:bg-amber-700"
+                                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-serif px-8 py-3 shadow-lg transform transition-transform hover:scale-105"
                               >
                                 {isThrowingCoins ? (
                                   <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                    投币中...
+                                    <div className="animate-pulse mr-2">🪙</div>
+                                    <span className="font-serif">投币中...</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Coins className="h-4 w-4 mr-2" />
-                                    投币 (3枚硬币)
+                                    <Coins className="h-5 w-5 mr-2" />
+                                    <span className="font-serif">投掷 3 枚硬币</span>
                                   </>
                                 )}
                               </Button>
                             ) : (
-                              <Button onClick={resetCoins} variant="outline">
+                              <Button 
+                                onClick={resetCoins} 
+                                variant="outline" 
+                                className="border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 font-serif hover:bg-amber-50 dark:hover:bg-amber-950/20"
+                              >
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 重新投币
                               </Button>
                             )}
+                          </div>
 
-                            {/* 投币结果显示 */}
-                            {coinResults.length > 0 && (
-                              <div className="grid grid-cols-6 gap-2 mt-4">
+                          {/* 投币历史记录 */}
+                          {coinResults.length > 0 && (
+                            <div className="bg-white/70 dark:bg-slate-800/50 rounded-xl p-4 border border-amber-200/50 dark:border-amber-700/30">
+                              <h4 className="text-center font-serif font-semibold text-amber-800 dark:text-amber-200 mb-4">
+                                投币历史记录
+                              </h4>
+                              <div className="grid grid-cols-6 gap-3">
                                 {Array.from({ length: 6 }, (_, i) => (
                                   <div key={i} className="text-center">
-                                    <div className="text-xs text-muted-foreground mb-1">
+                                    <div className="text-xs font-serif text-muted-foreground mb-2">
                                       第{i + 1}次
                                     </div>
-                                    <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center font-bold ${
-                                      i < coinResults.length 
-                                        ? 'bg-amber-100 border-amber-300 text-amber-800' 
-                                        : 'bg-gray-100 border-gray-300 text-gray-400'
-                                    }`}>
-                                      {i < coinResults.length ? coinResults[i] : '?'}
-                                    </div>
-                                    <div className="text-xs mt-1">
+                                    <SimpleCoin 
+                                      result={i < coinResults.length ? coinResults[i] : undefined}
+                                      isActive={i === currentCoinThrow}
+                                    />
+                                    <div className="text-xs font-serif mt-1 text-slate-600 dark:text-slate-400">
                                       {i < coinResults.length ? `${coinResults[i]}正面` : '待投'}
                                     </div>
                                   </div>
                                 ))}
                               </div>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     )}
@@ -550,7 +582,7 @@ export default function BuguaPage() {
                 </Card>
               </div>
 
-              {/* AI分析 - 优化用户体验 */}
+              {/* AI智能解读 - 结构化展示 */}
               <Card className="mb-8 border border-amber-200 dark:border-amber-700 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50">
                 <CardHeader className="text-center pb-4">
                   <div className="flex items-center justify-center space-x-3 mb-3">
@@ -567,21 +599,132 @@ export default function BuguaPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">
-                  <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-amber-200/50 dark:border-amber-700/50 shadow-inner">
-                    <div className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">
-                      {typeof result.ai_analysis === 'string' 
-                        ? result.ai_analysis.split('\n').map((line, index) => (
-                            <p key={index} className="mb-3 last:mb-0">
-                              {line}
-                            </p>
-                          ))
-                        : JSON.stringify(result.ai_analysis, null, 2)
+                  {/* 解析AI分析内容并分块展示 */}
+                  {(() => {
+                    const analysisText = typeof result.ai_analysis === 'string' 
+                      ? result.ai_analysis 
+                      : JSON.stringify(result.ai_analysis, null, 2)
+                    
+                    // 尝试解析结构化内容 - 宋代美学风格
+                    const sections = [
+                      { title: '卦象解读', icon: '☰', color: 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-700' },
+                      { title: '行动指南', icon: '☯', color: 'bg-orange-50/80 dark:bg-orange-950/30 border-orange-200 dark:border-orange-700' },
+                      { title: '时机把握', icon: '☱', color: 'bg-slate-50/80 dark:bg-slate-800/30 border-slate-200 dark:border-slate-600' },
+                      { title: '风险预警', icon: '☲', color: 'bg-yellow-50/80 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700' },
+                      { title: '成功要素', icon: '☳', color: 'bg-stone-50/80 dark:bg-stone-900/30 border-stone-200 dark:border-stone-600' }
+                    ]
+                    
+                    // 分割内容为不同段落
+                    const paragraphs = analysisText.split('\n').filter(line => line.trim())
+                    
+                    // 尝试根据关键词匹配段落到对应部分
+                    const sectionContent: { [key: string]: string[] } = {}
+                    let currentSection = ''
+                    
+                    for (const paragraph of paragraphs) {
+                      if (paragraph.includes('【卦象解读】') || paragraph.includes('卦象')) {
+                        currentSection = '卦象解读'
+                      } else if (paragraph.includes('【行动指南】') || paragraph.includes('建议') || paragraph.includes('行动')) {
+                        currentSection = '行动指南'
+                      } else if (paragraph.includes('【时机把握】') || paragraph.includes('时机') || paragraph.includes('时间')) {
+                        currentSection = '时机把握'
+                      } else if (paragraph.includes('【风险预警】') || paragraph.includes('风险') || paragraph.includes('注意')) {
+                        currentSection = '风险预警'
+                      } else if (paragraph.includes('【成功要素】') || paragraph.includes('成功') || paragraph.includes('关键')) {
+                        currentSection = '成功要素'
                       }
-                    </div>
-                  </div>
+                      
+                      if (currentSection && !paragraph.startsWith('【')) {
+                        if (!sectionContent[currentSection]) {
+                          sectionContent[currentSection] = []
+                        }
+                        sectionContent[currentSection].push(paragraph)
+                      }
+                    }
+                    
+                    // 如果没有结构化内容，则展示原始分析
+                    const hasStructuredContent = Object.keys(sectionContent).length > 0
+                    
+                    if (!hasStructuredContent) {
+                      return (
+                        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-amber-200/50 dark:border-amber-700/50 shadow-inner">
+                          <div className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">
+                            {paragraphs.map((paragraph, index) => (
+                              <p key={index} className="mb-4 last:mb-0">
+                                {paragraph}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    return (
+                      <div className="space-y-4">
+                        {sections.map((section, index) => {
+                          const content = sectionContent[section.title]
+                          if (!content || content.length === 0) return null
+                          
+                          return (
+                            <div 
+                              key={index} 
+                              className={`rounded-xl p-6 border ${section.color} shadow-sm backdrop-blur-sm`}
+                            >
+                              <div className="flex items-center space-x-4 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-md">
+                                  <span className="text-white text-xl font-bold">{section.icon}</span>
+                                </div>
+                                <h4 className="text-xl font-serif font-bold text-amber-800 dark:text-amber-200">
+                                  {section.title}
+                                </h4>
+                              </div>
+                              <div className="text-base font-serif leading-8 text-slate-800 dark:text-slate-200">
+                                {content.map((paragraph, pIndex) => (
+                                  <p key={pIndex} className="mb-4 last:mb-0">
+                                    {paragraph.replace(/^【.*?】\s*/, '')}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        
+                        {/* 如果有其他未分类的内容，在最后显示 */}
+                        {(() => {
+                          const uncategorized = paragraphs.filter(p => {
+                            return !Object.values(sectionContent).flat().includes(p) && 
+                                   !p.startsWith('【') && 
+                                   p.trim().length > 0
+                          })
+                          
+                          if (uncategorized.length === 0) return null
+                          
+                          return (
+                            <div className="bg-amber-50/80 dark:bg-amber-950/30 rounded-xl p-6 border border-amber-200 dark:border-amber-700 shadow-sm backdrop-blur-sm">
+                              <div className="flex items-center space-x-4 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shadow-md">
+                                  <span className="text-white text-xl font-bold">☴</span>
+                                </div>
+                                <h4 className="text-xl font-serif font-bold text-amber-800 dark:text-amber-200">
+                                  综合分析
+                                </h4>
+                              </div>
+                              <div className="text-base font-serif leading-8 text-slate-800 dark:text-slate-200">
+                                {uncategorized.map((paragraph, index) => (
+                                  <p key={index} className="mb-4 last:mb-0">
+                                    {paragraph}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    )
+                  })()}
                   
                   {/* 底部装饰 */}
-                  <div className="flex items-center justify-center mt-4 space-x-2">
+                  <div className="flex items-center justify-center mt-6 space-x-2">
                     <div className="w-2 h-2 rounded-full bg-amber-300"></div>
                     <div className="w-1 h-1 rounded-full bg-amber-400"></div>
                     <div className="w-2 h-2 rounded-full bg-orange-300"></div>
@@ -591,63 +734,73 @@ export default function BuguaPage() {
                 </CardContent>
               </Card>
 
-              {/* 基础解释 */}
+              {/* 基础解释 - 宋代美学风格 */}
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-blue-600">总体解释</CardTitle>
+                <Card className="border border-amber-200 dark:border-amber-700 bg-amber-50/80 dark:bg-amber-950/30 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-amber-800 dark:text-amber-200 font-serif text-lg font-bold">总体解释</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{result.interpretation.overall}</p>
+                    <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.interpretation.overall}</p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-green-600">行动建议</CardTitle>
+                <Card className="border border-orange-200 dark:border-orange-700 bg-orange-50/80 dark:bg-orange-950/30 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-orange-800 dark:text-orange-200 font-serif text-lg font-bold">行动建议</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{result.interpretation.advice}</p>
+                    <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.interpretation.advice}</p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-purple-600">时机把握</CardTitle>
+                <Card className="border border-slate-200 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/30 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-slate-700 dark:text-slate-300 font-serif text-lg font-bold">时机把握</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{result.interpretation.timing}</p>
+                    <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.interpretation.timing}</p>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-red-600">注意事项</CardTitle>
+                <Card className="border border-yellow-300 dark:border-yellow-700 bg-yellow-50/80 dark:bg-yellow-950/30 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-yellow-800 dark:text-yellow-200 font-serif text-lg font-bold">注意事项</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{result.interpretation.caution}</p>
+                    <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.interpretation.caution}</p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* 时间预测 */}
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>时间预测</CardTitle>
+              {/* 时间预测 - 宋代美学风格 */}
+              <Card className="mb-8 border border-amber-200 dark:border-amber-700 bg-gradient-to-br from-amber-50/80 to-orange-50/50 dark:from-amber-950/30 dark:to-orange-950/20 shadow-lg">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-serif font-bold text-amber-800 dark:text-amber-200 mb-2">时间预测</CardTitle>
+                  <div className="w-20 h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent mx-auto"></div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-3 gap-6">
-                    <div>
-                      <h4 className="font-semibold text-green-600 mb-2">近期 (1-3个月)</h4>
-                      <p className="text-sm">{result.timeframe.short_term}</p>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span className="text-white font-bold text-xl">☷</span>
+                      </div>
+                      <h4 className="font-serif font-bold text-amber-800 dark:text-amber-200 mb-3 text-lg">近期 (1-3个月)</h4>
+                      <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.timeframe.short_term}</p>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-blue-600 mb-2">中期 (3-12个月)</h4>
-                      <p className="text-sm">{result.timeframe.medium_term}</p>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span className="text-white font-bold text-xl">☶</span>
+                      </div>
+                      <h4 className="font-serif font-bold text-orange-800 dark:text-orange-200 mb-3 text-lg">中期 (3-12个月)</h4>
+                      <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.timeframe.medium_term}</p>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-purple-600 mb-2">远期 (1-3年)</h4>
-                      <p className="text-sm">{result.timeframe.long_term}</p>
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-slate-600 to-stone-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <span className="text-white font-bold text-xl">☵</span>
+                      </div>
+                      <h4 className="font-serif font-bold text-slate-700 dark:text-slate-300 mb-3 text-lg">远期 (1-3年)</h4>
+                      <p className="text-base font-serif leading-7 text-slate-800 dark:text-slate-200">{result.timeframe.long_term}</p>
                     </div>
                   </div>
                 </CardContent>

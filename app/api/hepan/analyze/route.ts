@@ -162,10 +162,22 @@ export async function POST(request: NextRequest) {
         relationship_type: body.relationship_type || 'couple'
       },
       outputData: {
+        success: true,
+        person1: {
+          name: hepanResult.person1.name,
+          bazi: hepanResult.person1.bazi,
+          wuxing_analysis: hepanResult.person1.wuxing
+        },
+        person2: {
+          name: hepanResult.person2.name,
+          bazi: hepanResult.person2.bazi,
+          wuxing_analysis: hepanResult.person2.wuxing
+        },
         compatibility: hepanResult.compatibility,
         analysis: hepanResult.analysis,
         detailed_scores: hepanResult.detailed_scores,
-        ai_analysis: aiAnalysis
+        ai_analysis: aiAnalysis,
+        cost: serviceCost
       },
       pointsCost: serviceCost
     })
