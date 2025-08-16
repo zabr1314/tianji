@@ -1,18 +1,5 @@
 {
   "version": 2,
-  "name": "tianji-ai",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ],
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30
