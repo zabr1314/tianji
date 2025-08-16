@@ -1,0 +1,24 @@
+# Vercel 环境变量配置清单
+# 请将以下变量逐个添加到 Vercel 项目的 Settings → Environment Variables
+
+# 1. Supabase 数据库配置
+NEXT_PUBLIC_SUPABASE_URL=https://wenprajwqscmklqcrsmh.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlbnByYWp3cXNjbWtscWNyc21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ1MDAsImV4cCI6MjA2OTg3MDUwMH0.1y5DowkCW_l0f4Lq2BgQei4lhvXd8fu13PFT87W4VH0
+
+# 2. AI 服务配置
+DEEPSEEK_API_KEY=sk-1513a3a52f564975935e6019724ac8c0
+
+# 3. 支付配置（可选）
+ZPAY_PID=2025072110321034
+ZPAY_PKEY=UYUBMiKrXVKRPljuGgeRpIlR43ZnHCqH
+
+# 4. 站点配置（部署后更新）
+NEXT_PUBLIC_SITE_URL=https://your-project-name.vercel.app
+
+# 5. 环境类型
+NODE_ENV=production
+
+# 注意事项：
+# - 每个变量的 Environment 都要设置为 "Production" 
+# - NEXT_PUBLIC_SITE_URL 需要在首次部署后更新为实际域名
+# - 不要在变量值前后添加引号
