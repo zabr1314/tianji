@@ -10,8 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { Calculator, Sparkles, ArrowLeft, RefreshCw, Download, Share2, Copy, Check, Calendar, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+// PDF和Canvas库将动态导入以优化性能
 
 interface BaziAnalysisResponse {
   success?: boolean
@@ -223,347 +222,268 @@ export default function BaziPage() {
       shareElement.style.color = '#ffffff'
       shareElement.style.position = 'relative'
       shareElement.style.overflow = 'hidden'
+      shareElement.style.boxSizing = 'border-box'
+      
+      // 从AI分析中提取命格总论
+      const extractMingGeOverview = (aiAnalysis: string) => {
+        // 查找命格总论内容
+        const minggeMatch = aiAnalysis.match(/【命格总论】([^【]*)/i) || aiAnalysis.match(/命格总论[：:](.*?)(?=【|$)/i)
+        if (minggeMatch && minggeMatch[1]) {
+          let content = minggeMatch[1].trim()
+          // 清理内容，移除多余的换行和标点
+          content = content.replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').trim()
+          // 如果内容过长，截取前150个字符
+          if (content.length > 150) {
+            content = content.substring(0, 150) + '...'
+          }
+          return content
+        }
+        
+        // 如果没找到命格总论，尝试提取开头的概括性内容
+        const firstParagraph = aiAnalysis.split(/[【\n]/)[0].trim()
+        if (firstParagraph.length > 20) {
+          let content = firstParagraph.substring(0, 150)
+          if (firstParagraph.length > 150) content += '...'
+          return content
+        }
+        
+        return '您拥有独特的个性魅力，在人生道路上展现出与众不同的特质和潜力。'
+      }
+
+      // 从AI分析中提取事业财运信息
+      const getCareerFinanceInfo = (aiAnalysis: string) => {
+        const info = { career: '', finance: '' }
+        
+        // 提取事业相关信息
+        const careerMatch = aiAnalysis.match(/【事业发展】([^【]*)/i) || aiAnalysis.match(/事业[发展]?[：:](.*?)(?=【|\n|。)/i)
+        if (careerMatch && careerMatch[1]) {
+          info.career = careerMatch[1].trim().substring(0, 50).replace(/[\n\r]+/g, ' ') + '...'
+        } else if (aiAnalysis.includes('适合') && (aiAnalysis.includes('管理') || aiAnalysis.includes('领导'))) {
+          info.career = '适合管理或领导岗位发展'
+        } else if (aiAnalysis.includes('创造') || aiAnalysis.includes('艺术')) {
+          info.career = '在创意艺术领域有发展潜力'
+        } else {
+          info.career = '事业发展稳健，前景可期'
+        }
+        
+        // 提取财运相关信息
+        const financeMatch = aiAnalysis.match(/【财运分析】([^【]*)/i) || aiAnalysis.match(/财运[分析]?[：:](.*?)(?=【|\n\n)/i)
+        if (financeMatch && financeMatch[1]) {
+          let content = financeMatch[1].trim().replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ')
+          // 扩大财运分析的内容长度到120字符
+          info.finance = content.length > 120 ? content.substring(0, 120) + '...' : content
+        } else if (aiAnalysis.includes('财运') && aiAnalysis.includes('旺')) {
+          info.finance = '您的财运较为旺盛，天生具备良好的理财天赋，善于发现商机和投资机会。建议多关注稳健型投资，避免过度冒险。'
+        } else if (aiAnalysis.includes('稳健')) {
+          info.finance = '您的财务管理能力稳健，收入相对稳定，适合长期投资和理财规划。建议建立多元化的投资组合。'
+        } else {
+          info.finance = '您具备不错的理财能力，财富会逐步积累。建议合理规划支出，适度投资，注重开源节流的平衡发展。'
+        }
+        
+        return info
+      }
+
+      // 从AI分析中提取关键特质
+      const getPersonalityTraits = (aiAnalysis: string) => {
+        const traits = []
+        if (aiAnalysis.includes('创造') || aiAnalysis.includes('艺术')) traits.push('🎨 富有创造力')
+        if (aiAnalysis.includes('领导') || aiAnalysis.includes('管理')) traits.push('👑 天生领导者')
+        if (aiAnalysis.includes('聪明') || aiAnalysis.includes('智慧')) traits.push('🧠 聪明机智')
+        if (aiAnalysis.includes('善良') || aiAnalysis.includes('仁慈')) traits.push('💖 心地善良')
+        if (aiAnalysis.includes('坚强') || aiAnalysis.includes('坚韧')) traits.push('💪 意志坚强')
+        if (aiAnalysis.includes('乐观') || aiAnalysis.includes('积极')) traits.push('☀️ 乐观积极')
+        if (aiAnalysis.includes('细心') || aiAnalysis.includes('谨慎')) traits.push('🔍 做事细心')
+        if (aiAnalysis.includes('热情') || aiAnalysis.includes('外向')) traits.push('🔥 热情开朗')
+        
+        // 如果没有匹配到特质，使用默认的
+        if (traits.length === 0) {
+          traits.push('✨ 独特魅力', '🌟 潜力无限', '💎 珍贵品质')
+        }
+        
+        return traits.slice(0, 3) // 最多显示3个特质
+      }
+
+      const aiAnalysisText = typeof data.ai_analysis === 'string' ? data.ai_analysis : JSON.stringify(data.ai_analysis)
+      const personalityTraits = getPersonalityTraits(aiAnalysisText)
+      const minggeOverview = extractMingGeOverview(aiAnalysisText)
+      const careerFinanceInfo = getCareerFinanceInfo(aiAnalysisText)
+      
+      // 五行英文转中文
+      const getWuxingChinese = (wuxing: string) => {
+        const wuxingMap: Record<string, string> = {
+          'wood': '木',
+          'fire': '火', 
+          'earth': '土',
+          'metal': '金',
+          'water': '水'
+        }
+        return wuxingMap[wuxing.toLowerCase()] || wuxing
+      }
       
       shareElement.innerHTML = `
         <div style="
-          background: linear-gradient(180deg, #fef7ed 0%, #fdf8e9 30%, #f9f1e6 70%, #f5ede4 100%);
-          padding: 40px 30px;
-          height: 100%;
+          width: 450px;
+          height: 800px;
+          background: linear-gradient(180deg, #fef7ed 0%, #f0f9ff 100%);
+          color: #1f2937;
+          font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+          padding: 20px;
           box-sizing: border-box;
           position: relative;
-          color: #4a5568;
-          font-family: 'Times New Roman', 'SimSun', serif;
         ">
           <!-- 宋代美学装饰 -->
-          <div style="
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            width: 80px;
-            height: 80px;
-            border: 1px solid rgba(180, 123, 56, 0.3);
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-          "></div>
-          <div style="
-            position: absolute;
-            top: 140px;
-            left: 25px;
-            width: 50px;
-            height: 50px;
-            border: 1px solid rgba(139, 116, 88, 0.3);
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(160, 138, 110, 0.1) 0%, transparent 70%);
-          "></div>
+          <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border: 1px solid rgba(180,123,56,0.3); border-radius: 50%; background: radial-gradient(circle, rgba(212,175,55,0.1) 0%, transparent 70%);"></div>
+          <div style="position: absolute; top: 80px; left: 15px; width: 25px; height: 25px; border: 1px solid rgba(139,116,88,0.3); border-radius: 50%; background: radial-gradient(circle, rgba(160,138,110,0.1) 0%, transparent 70%);"></div>
           
-          <!-- 传统印章样式标题 -->
-          <div style="text-align: center; margin-bottom: 40px;">
+          <!-- 标题 - 宋代印章风格 -->
+          <div style="text-align: center; margin-bottom: 16px;">
             <div style="
-              position: relative;
+              background: linear-gradient(135deg, #8b4513, #b8860b);
+              color: #fef7ed;
+              padding: 12px 20px;
+              border: 2px solid rgba(180,123,56,0.4);
+              border-radius: 10px;
               display: inline-block;
-              padding: 15px 25px;
-              background: rgba(180, 123, 56, 0.1);
-              border: 2px solid rgba(180, 123, 56, 0.4);
-              border-radius: 8px;
-              margin-bottom: 12px;
-            ">
-              <div style="
-                color: #8b4513;
-                font-size: 24px;
-                font-weight: bold;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-                letter-spacing: 2px;
-              ">天机AI·八字命盘</div>
-            </div>
-            <div style="
-              color: #6b5b73;
-              font-size: 13px;
-              font-style: italic;
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 6px;
+              box-shadow: 0 3px 10px rgba(139,69,19,0.2);
               letter-spacing: 1px;
-            ">承古法之精髓 · 融今世之智慧</div>
+            ">天机AI·性格命盘</div>
+            <div style="color: #8b7458; font-size: 11px; font-style: italic;">承古法之精髓 · 融今世之智慧</div>
           </div>
           
-          <!-- 八字四柱 - 宋代美学 -->
-          <div style="
-            background: rgba(255, 255, 255, 0.85);
-            border: 2px solid rgba(180, 123, 56, 0.2);
-            border-radius: 12px;
-            padding: 25px 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(139, 116, 88, 0.1);
-          ">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h3 style="
-                color: #8b4513;
-                font-size: 18px;
-                font-weight: bold;
-                margin: 0;
-                letter-spacing: 1px;
-                position: relative;
-              ">乾坤定位 · 四柱排列</h3>
-              <div style="
-                width: 60px;
-                height: 1px;
-                background: rgba(180, 123, 56, 0.5);
-                margin: 8px auto 0;
-              "></div>
-            </div>
+          <!-- 性格特质 & 命理格局 - 合并一行 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <!-- 性格特质 -->
             <div style="
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 15px;
+              background: rgba(255,255,255,0.9);
+              border: 2px solid rgba(180,123,56,0.2);
+              border-radius: 12px;
+              padding: 12px;
+              box-shadow: 0 3px 12px rgba(139,116,88,0.1);
             ">
-              <div style="
-                text-align: center;
-                padding: 15px 12px;
-                background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(218, 180, 60, 0.12));
-                border: 1px solid rgba(180, 123, 56, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 12px; margin: 0 0 6px 0; color: #8b4513; font-weight: 600;">年柱</p>
-                <p style="font-size: 22px; font-weight: bold; margin: 0; color: #704214; letter-spacing: 2px;">${data.bazi.year_ganzhi}</p>
-              </div>
-              <div style="
-                text-align: center;
-                padding: 15px 12px;
-                background: linear-gradient(135deg, rgba(139, 116, 88, 0.08), rgba(160, 138, 110, 0.12));
-                border: 1px solid rgba(139, 116, 88, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 12px; margin: 0 0 6px 0; color: #8b7458; font-weight: 600;">月柱</p>
-                <p style="font-size: 22px; font-weight: bold; margin: 0; color: #6b5b47; letter-spacing: 2px;">${data.bazi.month_ganzhi}</p>
-              </div>
-              <div style="
-                text-align: center;
-                padding: 15px 12px;
-                background: linear-gradient(135deg, rgba(180, 123, 56, 0.12), rgba(195, 135, 65, 0.16));
-                border: 2px solid rgba(180, 123, 56, 0.4);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
-              ">
-                <p style="font-size: 12px; margin: 0 0 6px 0; color: #8b4513; font-weight: 600;">日柱（日主）</p>
-                <p style="font-size: 22px; font-weight: bold; margin: 0; color: #704214; letter-spacing: 2px;">${data.bazi.day_ganzhi}</p>
-              </div>
-              <div style="
-                text-align: center;
-                padding: 15px 12px;
-                background: linear-gradient(135deg, rgba(139, 116, 88, 0.08), rgba(160, 138, 110, 0.12));
-                border: 1px solid rgba(139, 116, 88, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 12px; margin: 0 0 6px 0; color: #8b7458; font-weight: 600;">时柱</p>
-                <p style="font-size: 22px; font-weight: bold; margin: 0; color: #6b5b47; letter-spacing: 2px;">${data.bazi.hour_ganzhi}</p>
+              <h3 style="text-align: center; color: #8b4513; font-size: 13px; margin: 0 0 10px 0; font-weight: bold; letter-spacing: 1px;">✨ 性格特质</h3>
+              <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
+                ${personalityTraits.map(trait => `
+                  <div style="
+                    padding: 6px 8px;
+                    background: linear-gradient(135deg, #fef7ed, #f9f1e6);
+                    border-radius: 6px;
+                    border-left: 2px solid #b8860b;
+                    font-size: 11px;
+                    color: #8b4513;
+                    font-weight: 600;
+                    text-align: center;
+                  ">${trait}</div>
+                `).join('')}
               </div>
             </div>
-          </div>
-          
-          <!-- 五行配置 - 宋代美学 -->
-          <div style="
-            background: rgba(255, 255, 255, 0.85);
-            border: 2px solid rgba(180, 123, 56, 0.2);
-            border-radius: 12px;
-            padding: 25px 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 15px rgba(139, 116, 88, 0.1);
-          ">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h3 style="
-                color: #8b4513;
-                font-size: 18px;
-                font-weight: bold;
-                margin: 0;
-                letter-spacing: 1px;
-              ">五行相生 · 能量分布</h3>
-              <div style="
-                width: 60px;
-                height: 1px;
-                background: rgba(180, 123, 56, 0.5);
-                margin: 8px auto 0;
-              "></div>
-            </div>
+            
+            <!-- 命理格局 -->
             <div style="
-              display: grid;
-              grid-template-columns: repeat(5, 1fr);
-              gap: 10px;
+              background: rgba(255,255,255,0.9);
+              border: 2px solid rgba(180,123,56,0.2);
+              border-radius: 12px;
+              padding: 12px;
+              text-align: center;
+              box-shadow: 0 3px 12px rgba(139,116,88,0.1);
             ">
+              <h3 style="color: #8b4513; font-size: 13px; margin: 0 0 10px 0; font-weight: bold; letter-spacing: 1px;">🔮 命理格局</h3>
               <div style="
-                text-align: center; 
-                padding: 12px 6px; 
-                background: rgba(46, 125, 50, 0.12);
-                border: 1px solid rgba(46, 125, 50, 0.25);
+                background: linear-gradient(135deg, #fef7ed, #f9f1e6);
                 border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+                padding: 8px;
+                margin-bottom: 8px;
+                border: 1px solid rgba(180,123,56,0.3);
               ">
-                <p style="font-size: 11px; margin: 0 0 4px 0; color: #2e7d32; font-weight: 600;">木</p>
-                <p style="font-size: 18px; font-weight: bold; margin: 0; color: #1b5e20; letter-spacing: 1px;">${data.wuxing_analysis.wood}</p>
+                <div style="font-size: 14px; font-weight: bold; color: #8b4513; margin-bottom: 3px;">
+                  ${data.bazi.day_ganzhi[0]} 命格
+                </div>
+                <div style="font-size: 10px; color: #8b7458;">
+                  ${data.bazi.year_ganzhi}年 ${data.bazi.month_ganzhi}月 ${data.bazi.day_ganzhi}日 ${data.bazi.hour_ganzhi}时
+                </div>
               </div>
-              <div style="
-                text-align: center; 
-                padding: 12px 6px; 
-                background: rgba(211, 47, 47, 0.12);
-                border: 1px solid rgba(211, 47, 47, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 11px; margin: 0 0 4px 0; color: #d32f2f; font-weight: 600;">火</p>
-                <p style="font-size: 18px; font-weight: bold; margin: 0; color: #b71c1c; letter-spacing: 1px;">${data.wuxing_analysis.fire}</p>
-              </div>
-              <div style="
-                text-align: center; 
-                padding: 12px 6px; 
-                background: rgba(180, 123, 56, 0.12);
-                border: 1px solid rgba(180, 123, 56, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 11px; margin: 0 0 4px 0; color: #8b4513; font-weight: 600;">土</p>
-                <p style="font-size: 18px; font-weight: bold; margin: 0; color: #704214; letter-spacing: 1px;">${data.wuxing_analysis.earth}</p>
-              </div>
-              <div style="
-                text-align: center; 
-                padding: 12px 6px; 
-                background: rgba(158, 158, 158, 0.12);
-                border: 1px solid rgba(158, 158, 158, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 11px; margin: 0 0 4px 0; color: #616161; font-weight: 600;">金</p>
-                <p style="font-size: 18px; font-weight: bold; margin: 0; color: #424242; letter-spacing: 1px;">${data.wuxing_analysis.metal}</p>
-              </div>
-              <div style="
-                text-align: center; 
-                padding: 12px 6px; 
-                background: rgba(25, 118, 210, 0.12);
-                border: 1px solid rgba(25, 118, 210, 0.25);
-                border-radius: 8px;
-                box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-              ">
-                <p style="font-size: 11px; margin: 0 0 4px 0; color: #1976d2; font-weight: 600;">水</p>
-                <p style="font-size: 18px; font-weight: bold; margin: 0; color: #0d47a1; letter-spacing: 1px;">${data.wuxing_analysis.water}</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 命理特征 -->
-          <div style="
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            min-height: 120px;
-          ">
-            <div style="text-align: center; margin-bottom: 15px;">
-              <h3 style="
-                color: #1f2937;
-                font-size: 18px;
-                font-weight: bold;
-                margin: 0;
-              ">✨ 命理特征 ✨</h3>
-            </div>
-            <div style="
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 10px;
-            ">
-              <div style="
-                text-align: center;
-                padding: 15px 10px;
-                background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-                border-radius: 15px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                min-height: 65px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-              ">
-                <p style="font-size: 10px; margin: 0 0 4px 0; color: #065f46; font-weight: 600;">最强五行</p>
-                <p style="font-size: 16px; font-weight: bold; margin: 0; color: #064e3b;">${data.wuxing_analysis.strongest}</p>
-              </div>
-              <div style="
-                text-align: center;
-                padding: 15px 10px;
-                background: linear-gradient(135deg, #fee2e2, #fecaca);
-                border-radius: 15px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                min-height: 65px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-              ">
-                <p style="font-size: 10px; margin: 0 0 4px 0; color: #991b1b; font-weight: 600;">最弱五行</p>
-                <p style="font-size: 16px; font-weight: bold; margin: 0; color: #7f1d1d;">${data.wuxing_analysis.weakest}</p>
-              </div>
-              <div style="
-                text-align: center;
-                padding: 15px 10px;
-                background: linear-gradient(135deg, #fce7f3, #fbcfe8);
-                border-radius: 15px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                min-height: 65px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-              ">
-                <p style="font-size: 10px; margin: 0 0 4px 0; color: #be185d; font-weight: 600;">用神</p>
-                <p style="font-size: 16px; font-weight: bold; margin: 0; color: #9f1239;">${data.yongshen}</p>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+                <div style="background: rgba(139,116,88,0.1); padding: 6px; border-radius: 4px; font-size: 10px;">
+                  <div style="color: #8b4513; font-weight: bold;">优势</div>
+                  <div style="color: #704214;">${getWuxingChinese(data.wuxing_analysis.strongest)}性</div>
+                </div>
+                <div style="background: rgba(180,123,56,0.1); padding: 6px; border-radius: 4px; font-size: 10px;">
+                  <div style="color: #8b4513; font-weight: bold;">待补</div>
+                  <div style="color: #704214;">${getWuxingChinese(data.wuxing_analysis.weakest)}性</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- AI核心提示 -->
+          <!-- 命格总论 - 宋代美学 -->
           <div style="
-            background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(180,123,56,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(139,116,88,0.1);
           ">
-            <div style="margin-bottom: 12px;">
-              <span style="font-size: 20px;">🎯</span>
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+              <div style="font-size: 17px; margin-right: 6px;">📜</div>
+              <h3 style="color: #8b4513; font-size: 15px; margin: 0; font-weight: bold; letter-spacing: 1px;">命格总论</h3>
             </div>
-            <p style="
-              color: #581c87;
-              font-size: 14px;
-              font-weight: 600;
-              margin: 0 0 8px 0;
-              line-height: 1.4;
-            ">AI智能分析要点</p>
-            <p style="
-              color: #7c3aed;
-              font-size: 12px;
-              margin: 0;
-              line-height: 1.3;
-            ">基于传统八字理论结合现代AI算法<br/>为您量身定制专属命理解读</p>
-          </div>
-          
-          <!-- 底部品牌 -->
-          <div style="
-            text-align: center;
-            margin-top: auto;
-            padding: 15px 20px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-          ">
             <div style="
-              background: linear-gradient(90deg, #f59e0b, #ec4899, #8b5cf6);
-              -webkit-background-clip: text;
-              background-clip: text;
-              -webkit-text-fill-color: transparent;
-              font-size: 16px;
-              font-weight: bold;
-              margin-bottom: 4px;
-            ">天机AI</div>
-            <p style="
-              font-size: 11px;
-              margin: 0;
-              color: #6b7280;
-            ">传统智慧 × 现代科技</p>
+              background: linear-gradient(135deg, #fef7ed, #f9f1e6);
+              border-radius: 10px;
+              padding: 12px;
+              color: #704214;
+              font-size: 12px;
+              line-height: 1.5;
+              text-align: left;
+              font-weight: 500;
+              border: 1px solid rgba(180,123,56,0.3);
+              min-height: 60px;
+            ">
+              ${minggeOverview}
+            </div>
+          </div>
+
+          <!-- 财运分析 - 宋代美学 -->
+          <div style="
+            background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(180,123,56,0.2);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(139,116,88,0.1);
+            min-height: 140px;
+          ">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+              <div style="font-size: 20px; margin-right: 8px;">💰</div>
+              <h3 style="color: #8b4513; font-size: 17px; margin: 0; font-weight: bold; letter-spacing: 1px;">财运分析</h3>
+            </div>
+            <div style="
+              background: linear-gradient(135deg, #fef7ed, #f9f1e6);
+              border-radius: 10px;
+              padding: 16px;
+              border: 1px solid rgba(180,123,56,0.3);
+              box-shadow: inset 0 1px 3px rgba(139,116,88,0.1);
+              min-height: 80px;
+              display: flex;
+              align-items: center;
+            ">
+              <div style="
+                color: #704214; 
+                font-size: 12px; 
+                line-height: 1.6; 
+                text-align: left; 
+                font-weight: 500;
+                width: 100%;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              ">
+                ${careerFinanceInfo.finance}
+              </div>
+            </div>
           </div>
         </div>
       `
@@ -573,16 +493,21 @@ export default function BaziPage() {
       shareElement.style.left = '-9999px'
       document.body.appendChild(shareElement)
       
-      // 使用html2canvas生成canvas - 优化小红书格式
+      // 动态导入html2canvas以优化性能
+      const html2canvas = (await import('html2canvas')).default
+      
+      // 使用html2canvas生成canvas - 优化配置确保完整显示
       const canvas = await html2canvas(shareElement, {
-        scale: 2.5, // 更高分辨率，适合小红书显示
+        scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#fef7ed', // 匹配新的浅色背景
+        backgroundColor: '#fef7ed',
         width: 450,
         height: 800,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        windowWidth: 450,
+        windowHeight: 800
       })
       
       // 移除临时元素
@@ -703,6 +628,8 @@ export default function BaziPage() {
       
       try {
         console.log('开始渲染canvas...')
+        // 动态导入html2canvas
+        const html2canvas = (await import('html2canvas')).default
         const canvas = await html2canvas(testElement, {
           scale: 2,
           useCORS: true,
@@ -726,6 +653,9 @@ export default function BaziPage() {
         }
         
         console.log('Image data length:', imgData.length)
+        
+        // 动态导入jsPDF
+        const { jsPDF } = await import('jspdf')
         
         // 创建PDF
         const pdf = new jsPDF('p', 'mm', 'a4')
@@ -830,6 +760,8 @@ export default function BaziPage() {
             
             document.body.appendChild(aiElement)
             
+            // 重用之前的html2canvas导入或重新导入
+            const html2canvas = (await import('html2canvas')).default
             const aiCanvas = await html2canvas(aiElement, {
               scale: 2,
               useCORS: true,
@@ -871,6 +803,8 @@ export default function BaziPage() {
   
   // 备用方案：纯jsPDF生成
   const generatePurePDF = async (data: BaziAnalysisResponse, aiAnalysisText: string) => {
+    // 动态导入jsPDF
+    const { jsPDF } = await import('jspdf')
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = 210
     const pageHeight = 297
@@ -1180,7 +1114,6 @@ ${typeof data.ai_analysis === 'string' ? data.ai_analysis : JSON.stringify(data.
                 <BaziResult 
                   bazi={result.bazi}
                   wuxingAnalysis={result.wuxing_analysis}
-                  dayun={result.dayun || []}
                   yongshen={result.yongshen}
                   aiAnalysis={result.ai_analysis}
                   cost={result.cost}
@@ -1251,13 +1184,14 @@ ${typeof data.ai_analysis === 'string' ? data.ai_analysis : JSON.stringify(data.
                         
                         {/* 分享图片预览 */}
                         <div className="mb-6 flex justify-center">
-                          <div className="relative">
+                          <div className="relative max-w-md w-full">
                             <Image 
                               src={shareImageUrl} 
                               alt="八字分析分享图片" 
-                              width={384}
-                              height={682}
-                              className="max-w-sm w-full h-auto rounded-lg shadow-lg border border-amber-200 dark:border-amber-700"
+                              width={450}
+                              height={800}
+                              className="w-full h-auto rounded-lg shadow-lg border border-amber-200 dark:border-amber-700"
+                              style={{ maxHeight: '80vh', objectFit: 'contain' }}
                             />
                             <div className="absolute -top-3 -right-3 bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
                               ✨

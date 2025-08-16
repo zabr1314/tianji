@@ -31,6 +31,7 @@ async function getAggregatedRecords(params: {
     }
 
     try {
+      // 使用基础字段查询以确保兼容性，不强制要求updated_at
       const { data, error } = await supabase
         .from(config.table)
         .select('*')
@@ -48,7 +49,7 @@ async function getAggregatedRecords(params: {
           output_data: getOutputData(record, config.type),
           points_cost: config.pointsCost,
           created_at: record.created_at,
-          updated_at: record.updated_at,
+          updated_at: record.updated_at || record.created_at,
           is_favorite: record.is_favorite || false,
           tags: record.tags || []
         }))
@@ -68,10 +69,18 @@ async function getAggregatedRecords(params: {
     return params.sortOrder === 'asc' ? aTime - bTime : bTime - aTime
   })
 
-  // 应用分页
+  // 计算总数和分页数据
+  const totalCount = allRecords.length
   const startIndex = params.offset
   const endIndex = startIndex + params.limit
-  return allRecords.slice(startIndex, endIndex)
+  const paginatedRecords = allRecords.slice(startIndex, endIndex)
+  
+  
+  return {
+    records: paginatedRecords,
+    totalCount,
+    hasMore: endIndex < totalCount
+  }
 }
 
 // 根据记录类型生成标题
@@ -101,8 +110,8 @@ function getRecordSummary(record: any, type: string): string {
   // 根据不同类型获取摘要
   switch (type) {
     case 'dream':
-      // 对于梦境解析，优先使用AI分析的前100字符作为摘要
-      result = record.ai_analysis || record.interpretation_result || ''
+      // AI解梦与其他卡片保持一致，不显示详细摘要
+      result = ''
       break
     default:
       result = record.analysis_result || record.interpretation_result || record.divination_result || record.fortune_result || ''
@@ -208,7 +217,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
 
     // 获取记录列表 - 从所有可能的表中聚合数据
-    const records = await getAggregatedRecords({
+    const result = await getAggregatedRecords({
       userId: user.id,
       analysisType,
       limit,
@@ -219,11 +228,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: records,
+      data: result.records,
       pagination: {
         limit,
         offset,
-        hasMore: records.length === limit
+        totalCount: result.totalCount,
+        hasMore: result.hasMore
       }
     })
 

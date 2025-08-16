@@ -1,0 +1,96 @@
+/* 关键性能优化CSS */
+
+/* 使用transform代替position改变，启用硬件加速 */
+.hw-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 优化的渐变动画 */
+.optimized-fade {
+  transition: opacity 0.15s ease-out;
+}
+
+.optimized-slide {
+  transition: transform 0.2s ease-out;
+}
+
+/* 减少重绘的阴影 */
+.optimized-shadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 性能优化的模糊背景 */
+.optimized-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 内容可见性优化 - 用于大型列表 */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
+/* GPU加速的滚动 */
+.gpu-scroll {
+  transform: translateZ(0);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 减少layout shift的占位符 */
+.aspect-ratio-placeholder {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 优化的网格布局 */
+.optimized-grid {
+  display: grid;
+  grid-template-rows: masonry; /* 当浏览器支持时使用 */
+}
+
+/* 减少重排的fixed定位 */
+.fixed-optimized {
+  position: fixed;
+  transform: translateZ(0);
+}
+
+/* 优化的字体渲染 */
+.optimized-text {
+  font-display: swap;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 减少复合层的3D变换 */
+.layer-promotion {
+  transform: translate3d(0, 0, 0);
+}
+
+/* 优化的图片容器 */
+.optimized-image-container {
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.optimized-image-container img {
+  transition: transform 0.3s ease;
+}
+
+/* 防止不必要的重绘 */
+.contain-layout {
+  contain: layout style;
+}
+
+.contain-paint {
+  contain: paint;
+}

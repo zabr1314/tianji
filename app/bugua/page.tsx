@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,9 +10,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Sparkles, Coins, Clock, Zap, RefreshCw, HelpCircle } from 'lucide-react'
+import { Sparkles, Coins, Clock, Zap, RefreshCw, HelpCircle, Download, Share2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
-import { CoinFlipAnimation, SimpleCoin } from '@/components/ui/coin-flip-animation'
+// 动态加载动画组件以优化性能
+const CoinFlipAnimation = dynamic(() => import('@/components/ui/coin-flip-animation').then(mod => ({ default: mod.CoinFlipAnimation })), {
+  loading: () => <div className="h-32 w-32 bg-amber-100 dark:bg-amber-900 rounded-full animate-pulse mx-auto" />,
+  ssr: false
+})
+
+const SimpleCoin = dynamic(() => import('@/components/ui/coin-flip-animation').then(mod => ({ default: mod.SimpleCoin })), {
+  loading: () => <div className="h-8 w-8 bg-amber-200 dark:bg-amber-800 rounded-full animate-pulse" />,
+  ssr: false
+})
 
 interface BuguaResult {
   success: boolean
@@ -69,6 +80,11 @@ export default function BuguaPage() {
   const [result, setResult] = useState<BuguaResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
+  const [showShareImage, setShowShareImage] = useState(false)
 
   const categories = [
     { value: 'career', label: '事业工作' },
@@ -177,6 +193,106 @@ export default function BuguaPage() {
     setUrgency('')
     setMethod('time')
     resetCoins()
+    setShareImageUrl(null)
+    setShowShareImage(false)
+  }
+
+  // 保存卜卦报告
+  const handleSaveReport = async () => {
+    if (!result) return
+    
+    setIsSaving(true)
+    try {
+      // 生成报告内容
+      const reportContent = generateBuguaReportContent(result)
+      
+      // 创建并下载文件
+      const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `卜卦分析报告_${result.hexagram.name}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('保存报告失败:', error)
+      alert('保存报告失败，请稍后重试')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // 分享卜卦结果
+  const handleShareResult = async () => {
+    if (!result) return
+    
+    setIsSharing(true)
+    try {
+      // 生成分享图片
+      const shareImageBlob = await generateBuguaShareImage(result)
+      
+      if (shareImageBlob) {
+        // 创建图片URL用于页面显示
+        const imageUrl = URL.createObjectURL(shareImageBlob)
+        setShareImageUrl(imageUrl)
+        setShowShareImage(true)
+      } else {
+        // 降级方案：文本分享
+        const shareText = `🔮 我在天机AI完成了卜卦分析！
+📖 卦象：${result.hexagram.name} (第${result.hexagram.number}卦)
+✨ 卦意：${result.hexagram.meaning}
+🎯 AI为我指明了前进的方向
+🌟 来体验专业的易经卜卦吧！
+#天机AI #卜卦 #易经`
+        
+        if (navigator.share) {
+          await navigator.share({
+            title: '我的卜卦分析报告',
+            text: shareText,
+            url: window.location.href
+          })
+        } else {
+          await navigator.clipboard.writeText(shareText)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        }
+      }
+    } catch (error) {
+      console.error('分享失败:', error)
+      try {
+        const shareText = `天机AI - ${result.hexagram.name}卦象分析\n\n卦意：${result.hexagram.meaning}\n\n查看详情：${window.location.href}`
+        await navigator.clipboard.writeText(shareText)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (clipboardError) {
+        alert('分享失败，请稍后重试')
+      }
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  // 关闭分享图片显示
+  const handleCloseShareImage = () => {
+    setShowShareImage(false)
+    if (shareImageUrl) {
+      URL.revokeObjectURL(shareImageUrl)
+      setShareImageUrl(null)
+    }
+  }
+
+  // 下载分享图片
+  const handleDownloadShareImage = () => {
+    if (!shareImageUrl) return
+    
+    const a = document.createElement('a')
+    a.href = shareImageUrl
+    a.download = `卜卦分析分享_${result?.hexagram.name}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   const getScoreColor = (score: number) => {
@@ -191,6 +307,193 @@ export default function BuguaPage() {
     if (fortune.includes('吉')) return 'text-blue-600'
     if (fortune.includes('平')) return 'text-gray-600'
     return 'text-red-600'
+  }
+
+  // 生成卜卦报告内容
+  const generateBuguaReportContent = (data: BuguaResult): string => {
+    const date = new Date().toLocaleDateString('zh-CN')
+    return `
+==============================
+          卜卦分析报告
+==============================
+
+生成时间：${date}
+卜卦方法：${data.method === 'time' ? '时间起卦法' : '投币起卦法'}
+问题：${data.question.question}
+分类：${data.question.category}
+紧急程度：${data.question.urgency}
+
+==============================
+           卦象信息
+==============================
+卦名：${data.hexagram.name} (第${data.hexagram.number}卦)
+上卦：${data.hexagram.upper}
+下卦：${data.hexagram.lower}
+五行：${data.hexagram.element}
+吉凶：${data.hexagram.fortune}
+卦意：${data.hexagram.meaning}
+
+==============================
+           详细分析
+==============================
+上卦分析：
+${data.details.upper_gua_analysis}
+
+下卦分析：
+${data.details.lower_gua_analysis}
+
+卦象互动：
+${data.details.interaction}
+
+==============================
+           整体解读
+==============================
+${data.interpretation.overall}
+
+==============================
+           建议指导
+==============================
+${data.interpretation.advice}
+
+==============================
+           时机分析
+==============================
+${data.interpretation.timing}
+
+==============================
+           注意事项
+==============================
+${data.interpretation.caution}
+
+==============================
+           时间展望
+==============================
+近期展望：
+${data.timeframe.short_term}
+
+中期发展：
+${data.timeframe.medium_term}
+
+长期趋势：
+${data.timeframe.long_term}
+
+==============================
+          AI深度解读
+==============================
+${data.ai_analysis}
+
+==============================
+本次分析消耗：${data.cost} 天机点
+报告由天机AI生成 - 仅供参考
+==============================`
+  }
+
+  // 生成分享图片
+  const generateBuguaShareImage = async (data: BuguaResult): Promise<Blob | null> => {
+    try {
+      // 动态导入html2canvas
+      const html2canvas = await import('html2canvas').then(module => module.default)
+      
+      // 创建分享内容元素
+      const shareElement = document.createElement('div')
+      shareElement.style.cssText = `
+        width: 450px;
+        height: 800px;
+        background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 50%, #fdba74 100%);
+        font-family: serif;
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      `
+      
+      shareElement.innerHTML = `
+        <div style="padding: 32px 24px; height: 100%; display: flex; flex-direction: column; color: #8b4513;">
+          <!-- 标题区域 -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="background: #dc2626; color: white; display: inline-block; padding: 12px 20px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 8px;">
+              我的卜卦分析报告
+            </div>
+            <div style="font-size: 14px; color: #a16207;">天机AI · 易经解卦</div>
+          </div>
+          
+          <!-- 卦象展示 -->
+          <div style="background: rgba(255,255,255,0.9); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 2px solid #f59e0b; text-align: center;">
+            <div style="font-size: 32px; font-weight: bold; color: #dc2626; margin-bottom: 8px;">
+              ${data.hexagram.name}
+            </div>
+            <div style="font-size: 12px; color: #7c2d12; margin-bottom: 8px;">
+              第${data.hexagram.number}卦 | ${data.hexagram.element} | ${data.hexagram.fortune}
+            </div>
+            <div style="display: flex; justify-content: center; gap: 16px; margin-top: 12px;">
+              <div style="text-align: center;">
+                <div style="font-size: 10px; color: #7c2d12; margin-bottom: 4px;">上卦</div>
+                <div style="font-size: 16px; font-weight: bold;">${data.hexagram.upper}</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 10px; color: #7c2d12; margin-bottom: 4px;">下卦</div>
+                <div style="font-size: 16px; font-weight: bold;">${data.hexagram.lower}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 卦意释义 -->
+          <div style="background: rgba(255,255,255,0.8); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 16px;">📖</span>
+              <span style="font-weight: bold; margin-left: 8px; font-size: 14px;">卦意释义</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.5; color: #7c2d12;">
+              ${data.hexagram.meaning.length > 80 ? data.hexagram.meaning.substring(0, 80) + '...' : data.hexagram.meaning}
+            </div>
+          </div>
+          
+          <!-- 指导建议 -->
+          <div style="background: rgba(255,255,255,0.8); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 2px solid #f59e0b; flex: 1;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 16px;">🎯</span>
+              <span style="font-weight: bold; margin-left: 8px; font-size: 14px;">指导建议</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.5; color: #7c2d12;">
+              ${data.interpretation.advice.length > 100 ? data.interpretation.advice.substring(0, 100) + '...' : data.interpretation.advice}
+            </div>
+          </div>
+          
+          <!-- 底部装饰 -->
+          <div style="text-align: center; padding-top: 16px; border-top: 2px solid #f59e0b;">
+            <div style="font-size: 12px; color: #a16207; font-weight: bold;">扫码体验专业的易经卜卦</div>
+          </div>
+        </div>
+      `
+      
+      document.body.appendChild(shareElement)
+      
+      // 使用html2canvas生成图片
+      const canvas = await html2canvas(shareElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#fef7ed',
+        width: 450,
+        height: 800,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 450,
+        windowHeight: 800
+      })
+      
+      document.body.removeChild(shareElement)
+      
+      // 转换为Blob
+      return new Promise((resolve) => {
+        canvas.toBlob(resolve, 'image/png')
+      })
+    } catch (error) {
+      console.error('生成分享图片失败:', error)
+      return null
+    }
   }
 
   return (
@@ -812,14 +1115,95 @@ export default function BuguaPage() {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   重新卜卦
                 </Button>
-                <Button variant="outline" className="border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 font-serif">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  保存卦象
+                <Button 
+                  onClick={handleSaveReport}
+                  disabled={isSaving}
+                  variant="outline" 
+                  className="border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 font-serif"
+                >
+                  {isSaving ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  {isSaving ? '保存中...' : '保存报告'}
                 </Button>
-                <Button variant="outline" className="border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 font-serif">
-                  分享结果
+                <Button 
+                  onClick={handleShareResult}
+                  disabled={isSharing}
+                  variant="outline" 
+                  className="border-amber-300 dark:border-amber-600 text-amber-700 dark:text-amber-300 font-serif"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  ) : isSharing ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Share2 className="h-4 w-4 mr-2" />
+                  )}
+                  {copied ? '已复制' : isSharing ? '分享中...' : '分享结果'}
                 </Button>
               </div>
+
+              {/* 分享图片显示区域 */}
+              {showShareImage && shareImageUrl && (
+                <div className="mt-8">
+                  <Card className="bg-gradient-to-br from-amber-50/90 to-orange-50/90 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800/50">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl font-serif font-bold text-amber-800 dark:text-amber-200">
+                          🔮 分享图片已生成
+                        </CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCloseShareImage}
+                          className="text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <p className="text-amber-700 dark:text-amber-300 font-serif mb-6">
+                          您的卜卦分析图片已按照宋代美学风格生成，适合分享到小红书等社交平台
+                        </p>
+                        
+                        {/* 分享图片预览 */}
+                        <div className="mb-6 flex justify-center">
+                          <div className="relative">
+                            <Image 
+                              src={shareImageUrl} 
+                              alt="卜卦分析分享图片" 
+                              width={384}
+                              height={384}
+                              className="max-w-sm w-full h-auto rounded-lg shadow-lg border border-amber-200 dark:border-amber-700"
+                            />
+                            <div className="absolute -top-3 -right-3 bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                              🔮
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* 操作按钮 */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                          <Button
+                            onClick={handleDownloadShareImage}
+                            className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-serif px-6 py-2"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            下载图片
+                          </Button>
+                          <p className="text-sm text-amber-600 dark:text-amber-400 font-serif">
+                            建议保存到相册后分享到社交平台
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
 
               {/* 历史记录提示 - 宋代美学风格 */}
               <div className="mt-8">

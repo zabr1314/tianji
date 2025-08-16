@@ -138,7 +138,7 @@ export function GenericAnalysisResult({
             ),
             // 列表项 - 统一格式
             li: ({children, ...props}) => {
-              const isOrdered = props.ordered;
+              const isOrdered = (props as any).ordered;
               return (
                 <li className={`${isOrdered ? 'list-decimal' : 'list-disc'} list-inside text-slate-700 dark:text-slate-300 leading-relaxed pl-2`}>
                   <span className="ml-2 font-serif">{children}</span>
@@ -146,7 +146,8 @@ export function GenericAnalysisResult({
               )
             },
             // 代码
-            code: ({children, inline}) => {
+            code: ({children, ...props}) => {
+              const inline = (props as any).inline;
               if (inline) {
                 return (
                   <code className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-sm font-mono">
@@ -247,6 +248,568 @@ export function GenericAnalysisResult({
     )
   }
 
+  // 获取五行颜色配置
+  const getWuxingColor = (wuxing: string) => {
+    const colors = {
+      '木': 'bg-green-100 text-green-800',
+      '火': 'bg-red-100 text-red-800',
+      '土': 'bg-yellow-100 text-yellow-800',
+      '金': 'bg-gray-100 text-gray-800',
+      '水': 'bg-blue-100 text-blue-800'
+    }
+    return colors[wuxing as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+  }
+
+  // 获取评分颜色
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600'
+    if (score >= 60) return 'text-blue-600'
+    if (score >= 40) return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  // 获取吉凶颜色
+  const getFortuneColor = (fortune: string) => {
+    if (fortune === '大吉') return 'text-green-600 bg-green-50'
+    if (fortune === '吉') return 'text-blue-600 bg-blue-50'
+    if (fortune === '半吉') return 'text-yellow-600 bg-yellow-50'
+    return 'text-red-600 bg-red-50'
+  }
+
+  // 渲染姓名分析结果 - 与主页面保持完全一致的宋代美学风格
+  function renderNameAnalysisResult(result: any) {
+    if (!result) return null
+
+    return (
+      <>
+        {/* 姓名展示与核心信息 - 宋代美学风格 */}
+        <Card className="mb-6 shadow-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+          <CardHeader className="text-center pb-3">
+            <div className="text-sm font-serif text-slate-600 dark:text-slate-400 mb-1">
+              {result.analysis_type === 'current' ? '现有姓名分析' : '起名建议分析'}
+            </div>
+            <CardTitle className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-3">
+              {result.name_to_analyze || result.name || title}
+            </CardTitle>
+            <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto mb-4"></div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* 左侧：姓名结构分析 */}
+              <div className="space-y-4">
+                {/* 姓名拆解 */}
+                <div className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="text-center mb-4">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300">姓名结构</h4>
+                    <div className="w-12 h-px bg-slate-300 dark:bg-slate-600 mx-auto mt-2"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 姓氏 */}
+                    <div className="text-center">
+                      <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          {result.basic_info?.surname || result.name_to_analyze?.charAt(0) || title?.charAt(0)}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          姓氏 · {result.basic_info?.surname_strokes || '0'}画
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <Badge className={getWuxingColor(result.wuxing_analysis?.surname_wuxing || '金')} variant="outline">
+                          {result.wuxing_analysis?.surname_wuxing || '金'}
+                        </Badge>
+                      </div>
+                    </div>
+                    {/* 名字 */}
+                    <div className="text-center">
+                      <div className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          {result.basic_info?.given_name || result.name_to_analyze?.slice(1) || title?.slice(1)}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          名字 · {result.basic_info?.given_strokes || '0'}画
+                        </div>
+                      </div>
+                      <div className="mt-2 flex justify-center space-x-1">
+                        {result.wuxing_analysis?.given_wuxing?.map((wuxing: string, index: number) => (
+                          <Badge key={index} className={getWuxingColor(wuxing)} variant="outline">
+                            {wuxing}
+                          </Badge>
+                        )) || (
+                          <Badge className={getWuxingColor('木')} variant="outline">木</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* 总笔画 */}
+                  <div className="mt-4 text-center p-3 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div className="text-base font-serif text-slate-600 dark:text-slate-400">
+                      总笔画：<span className="font-bold text-slate-700 dark:text-slate-300">{result.basic_info?.total_strokes || '0'}</span>画
+                    </div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      整体五行：<Badge className={getWuxingColor(result.wuxing_analysis?.overall_wuxing || '土')} variant="outline">
+                        {result.wuxing_analysis?.overall_wuxing || '土'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 右侧：综合评分与核心指标 */}
+              <div className="space-y-4">
+                {/* 综合评分 */}
+                <div className="text-center bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="text-5xl font-serif font-bold mb-3">
+                    <span className={`${getScoreColor(result.scores?.overall_score || 75)} drop-shadow-sm`}>
+                      {result.scores?.overall_score || 75}
+                    </span>
+                    <span className="text-2xl font-serif text-slate-500 dark:text-slate-400">分</span>
+                  </div>
+                  <Badge variant="secondary" className="bg-slate-700 dark:bg-slate-600 text-white font-serif px-3 py-1">
+                    综合评价
+                  </Badge>
+                  <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                    五行配合：{result.wuxing_analysis?.wuxing_compatibility || '和谐'}
+                  </div>
+                </div>
+
+                {/* 各项评分 */}
+                <div className="space-y-3">
+                  {result.scores && Object.entries(result.scores).filter(([key]) => key !== 'overall_score').map(([key, score]) => {
+                    const labels = {
+                      wuxing_score: '五行评分',
+                      numerology_score: '数理评分',
+                      phonetic_score: '音韵评分',
+                      meaning_score: '寓意评分'
+                    }
+                    const icons = {
+                      wuxing_score: '⚊',
+                      numerology_score: '算',
+                      phonetic_score: '音',
+                      meaning_score: '意'
+                    }
+                    
+                    return (
+                      <div key={key} className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
+                              <span className="text-xs font-serif font-bold text-slate-600 dark:text-slate-400">
+                                {icons[key as keyof typeof icons]}
+                              </span>
+                            </div>
+                            <span className="text-xs font-serif font-semibold text-slate-700 dark:text-slate-300">
+                              {labels[key as keyof typeof labels]}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className={`text-base font-serif font-bold ${getScoreColor(score as number)}`}>
+                              {String(score)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 五行分析 - 宋代美学风格 */}
+        {result.wuxing_analysis && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                五行配置分析
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid lg:grid-cols-2 gap-8">
+                {/* 左侧：五行分布 */}
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">五行分布</h4>
+                    <div className="space-y-4">
+                      {result.wuxing_analysis.wuxing_balance && Object.entries(result.wuxing_analysis.wuxing_balance).map(([element, count]) => {
+                        const elementNames = {
+                          wood: '木', fire: '火', earth: '土', metal: '金', water: '水'
+                        }
+                        const elementColors = {
+                          wood: 'bg-green-500',
+                          fire: 'bg-red-500',
+                          earth: 'bg-yellow-500',
+                          metal: 'bg-gray-500',
+                          water: 'bg-blue-500'
+                        }
+                        return (
+                          <div key={element} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-6 h-6 rounded-full ${elementColors[element as keyof typeof elementColors]} border border-slate-300 dark:border-slate-600`}></div>
+                              <span className="text-sm font-serif text-slate-700 dark:text-slate-300">
+                                {elementNames[element as keyof typeof elementNames]}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-20 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${elementColors[element as keyof typeof elementColors]}`}
+                                  style={{width: `${Math.min((count as number) * 20, 100)}%`}}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-serif font-bold text-slate-600 dark:text-slate-400 w-6">
+                                {String(count)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">五行配合</h4>
+                    <div className="text-center">
+                      <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif px-4 py-2">
+                        {result.wuxing_analysis.wuxing_compatibility}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 右侧：五行属性展示 */}
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">五行属性</h4>
+                    <div className="space-y-4">
+                      <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">姓氏五行</div>
+                        <Badge className={`${getWuxingColor(result.wuxing_analysis.surname_wuxing)} text-lg px-4 py-2`}>
+                          {result.wuxing_analysis.surname_wuxing}
+                        </Badge>
+                      </div>
+                      <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">名字五行</div>
+                        <div className="flex justify-center space-x-2">
+                          {result.wuxing_analysis.given_wuxing?.map((wuxing: string, index: number) => (
+                            <Badge key={index} className={`${getWuxingColor(wuxing)} px-3 py-1`}>
+                              {wuxing}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">整体五行</div>
+                        <Badge className={`${getWuxingColor(result.wuxing_analysis.overall_wuxing)} text-lg px-4 py-2`}>
+                          {result.wuxing_analysis.overall_wuxing}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 数理分析 - 宋代美学风格 */}
+        {result.numerology && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                数理格局分析
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-slate-50/50 dark:bg-slate-800/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="text-center mb-6">
+                  <div className="text-sm text-slate-600 dark:text-slate-400 font-serif">五格数理</div>
+                </div>
+                <div className="grid md:grid-cols-5 gap-6">
+                  {Object.entries(result.numerology).filter(([key]) => !key.includes('_fortune')).map(([key, value]) => {
+                    const labels = {
+                      tiange: '天格',
+                      dige: '地格',
+                      renge: '人格',
+                      waige: '外格',
+                      zongge: '总格'
+                    }
+                    const descriptions = {
+                      tiange: '祖运',
+                      dige: '前运',
+                      renge: '主运',
+                      waige: '副运',
+                      zongge: '后运'
+                    }
+                    const fortuneKey = `${key}_fortune` as keyof typeof result.numerology
+                    const fortune = result.numerology[fortuneKey] as string
+                    const isMainGe = key === 'renge' // 人格是主格
+                    
+                    return (
+                      <div key={key} className="text-center relative">
+                        <div className={`bg-white dark:bg-slate-900 p-4 rounded-lg border transition-all duration-200 ${
+                          isMainGe 
+                            ? 'border-2 border-slate-400 dark:border-slate-500 shadow-md' 
+                            : 'border border-slate-200 dark:border-slate-700'
+                        }`}>
+                          {isMainGe && (
+                            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                              <Badge variant="secondary" className="bg-slate-700 text-white border-0 text-xs px-2 py-0.5">
+                                主格
+                              </Badge>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-serif">
+                              {labels[key as keyof typeof labels]}
+                            </div>
+                            <div className="text-3xl font-serif font-bold text-slate-700 dark:text-slate-300">
+                              {String(value)}
+                            </div>
+                            <div className="w-8 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+                            <Badge className={`${getFortuneColor(fortune)} text-xs px-2 py-1`}>
+                              {fortune}
+                            </Badge>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              {descriptions[key as keyof typeof descriptions]}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 音韵分析 - 宋代美学风格 */}
+        {result.phonetics && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                音韵特点分析
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">声调组合</h4>
+                    <div className="flex justify-center space-x-3">
+                      {result.phonetics.tones?.map((tone: number, index: number) => (
+                        <div key={index} className="text-center">
+                          <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center">
+                            <span className="text-lg font-serif font-bold text-slate-700 dark:text-slate-300">
+                              {tone}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                            {tone}调
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">音调和谐度</h4>
+                    <div className="text-center">
+                      <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif px-4 py-2">
+                        {result.phonetics.tone_harmony}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">发音难易度</h4>
+                    <div className="text-center">
+                      <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif px-4 py-2">
+                        {result.phonetics.pronunciation_difficulty}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">韵律美感</h4>
+                    <div className="text-center">
+                      <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif px-4 py-2">
+                        {result.phonetics.rhyme_quality}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 寓意分析与改进建议 - 宋代美学风格 */}
+        {(result.meanings || result.suggestions) && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                寓意分析与改进建议
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* 左侧：优势特点 */}
+                <div className="space-y-4">
+                  {result.meanings?.positive_meanings && (
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">积极寓意</h4>
+                      <ul className="space-y-2">
+                        {result.meanings.positive_meanings.map((meaning: string, index: number) => (
+                          <li key={index} className="flex items-start text-sm">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                            <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{meaning}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {result.suggestions?.strengths && (
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">姓名优势</h4>
+                      <ul className="space-y-2">
+                        {result.suggestions.strengths.map((strength: string, index: number) => (
+                          <li key={index} className="flex items-start text-sm">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                            <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* 右侧：改进建议 */}
+                <div className="space-y-4">
+                  {result.meanings?.potential_issues && result.meanings.potential_issues.length > 0 && (
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">注意事项</h4>
+                      <ul className="space-y-2">
+                        {result.meanings.potential_issues.map((issue: string, index: number) => (
+                          <li key={index} className="flex items-start text-sm">
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                            <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{issue}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {result.suggestions?.weaknesses && result.suggestions.weaknesses.length > 0 && (
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">待改进方面</h4>
+                      <ul className="space-y-2">
+                        {result.suggestions.weaknesses.map((weakness: string, index: number) => (
+                          <li key={index} className="flex items-start text-sm">
+                            <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                            <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{weakness}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {result.suggestions?.improvement_suggestions && result.suggestions.improvement_suggestions.length > 0 && (
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">改进建议</h4>
+                      <ul className="space-y-2">
+                        {result.suggestions.improvement_suggestions.map((suggestion: string, index: number) => (
+                          <li key={index} className="flex items-start text-sm">
+                            <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                            <span className="text-slate-700 dark:text-slate-300 leading-relaxed">{suggestion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 人生指导 - 宋代美学风格 */}
+        {result.suggestions && (result.suggestions.lucky_directions || result.suggestions.suitable_careers) && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                人生指导
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {result.suggestions.lucky_directions && (
+                  <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">有利方位</h4>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {result.suggestions.lucky_directions.map((direction: string, index: number) => (
+                        <Badge key={index} variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif">
+                          {direction}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {result.suggestions.suitable_careers && (
+                  <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-serif font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">适合职业</h4>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {result.suggestions.suitable_careers.map((career: string, index: number) => (
+                        <Badge key={index} variant="outline" className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-serif">
+                          {career}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 文化内涵 - 宋代美学风格 */}
+        {result.meanings?.cultural_connotations && (
+          <Card className="mb-6 border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-2">
+                文化内涵
+              </CardTitle>
+              <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+                <ul className="space-y-3">
+                  {result.meanings.cultural_connotations.map((connotation: string, index: number) => (
+                    <li key={index} className="flex items-start">
+                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <span className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{connotation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* 分析标题 */}
@@ -298,33 +861,11 @@ export function GenericAnalysisResult({
             </Card>
           )}
 
-          {/* 姓名分析的数理显示 */}
-          {analysisType === 'name' && additionalData.strokes && (
-            <Card className="shadow-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
-              <CardHeader>
-                <CardTitle className="text-xl font-serif font-bold text-slate-700 dark:text-slate-300 text-center">
-                  姓名数理
-                </CardTitle>
-                <div className="w-16 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {additionalData.strokes.map((stroke: any, index: number) => (
-                    <div key={index} className="text-center bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="text-sm text-slate-600 dark:text-slate-400 font-serif mb-2">
-                        {['天格', '人格', '地格', '总格'][index] || '外格'}
-                      </div>
-                      <div className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200">
-                        {stroke.value}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-serif">
-                        {stroke.element}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          {/* 姓名分析的完整展示 */}
+          {analysisType === 'name' && additionalData && (
+            <div className="space-y-6">
+              {renderNameAnalysisResult(additionalData)}
+            </div>
           )}
         </>
       )}
@@ -400,16 +941,16 @@ ${analysis.dream_summary || '这是一个需要深入解读的梦境。'}
 您当前的情绪状态：${analysis.psychological_analysis?.emotional_state || '需要关注内心状态'}
 
 ${analysis.psychological_analysis?.subconscious_themes?.length > 0 ? `### 潜意识主题
-${analysis.psychological_analysis.subconscious_themes.map(theme => `- ${theme}`).join('\n')}
+${analysis.psychological_analysis.subconscious_themes.map((theme: any) => `- ${theme}`).join('\n')}
 
 ` : ''}${analysis.life_guidance?.current_situation_insights?.length > 0 ? `## 生活洞察
-${analysis.life_guidance.current_situation_insights.map(insight => `- ${insight}`).join('\n')}
+${analysis.life_guidance.current_situation_insights.map((insight: any) => `- ${insight}`).join('\n')}
 
 ` : ''}${analysis.life_guidance?.recommended_actions?.length > 0 ? `## 建议行动
-${analysis.life_guidance.recommended_actions.map(action => `- ${action}`).join('\n')}
+${analysis.life_guidance.recommended_actions.map((action: any) => `- ${action}`).join('\n')}
 
 ` : ''}${analysis.warnings_and_suggestions?.health_reminders?.length > 0 ? `## 健康提醒
-${analysis.warnings_and_suggestions.health_reminders.map(reminder => `- ${reminder}`).join('\n')}
+${analysis.warnings_and_suggestions.health_reminders.map((reminder: any) => `- ${reminder}`).join('\n')}
 
 ` : ''}---
 *基于系统分析重构的解读内容*`

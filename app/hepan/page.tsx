@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,9 +15,18 @@ import { TimeSelector } from '@/components/ui/time-selector'
 import { CitySelector } from '@/components/ui/city-selector'
 import { Heart, ArrowLeft, Users, Sparkles, Calendar, User, RefreshCw, Download, Share2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
-import { CompactHepanResult } from '@/components/modules/CompactHepanResult'
+// PDF和Canvas库将动态导入以优化性能
+// 懒加载CompactHepanResult组件以优化性能
+const CompactHepanResult = dynamic(() => import('@/components/modules/CompactHepanResult').then(mod => ({ default: mod.CompactHepanResult })), {
+  loading: () => (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-48 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+      <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+      <div className="h-64 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+    </div>
+  ),
+  ssr: false
+})
 
 interface PersonInfo {
   name: string
@@ -699,18 +710,16 @@ ${data.ai_analysis}
             <section>
               <div className="text-center mb-8">
                 <h3 className="text-3xl font-serif font-bold text-slate-700 dark:text-slate-300 mb-4">合盘分析结果</h3>
-                <div className="w-24 h-px bg-slate-300 dark:bg-slate-600 mx-auto mb-6"></div>
-                <Button onClick={handleReset} variant="outline" className="font-serif border-slate-300 dark:border-slate-600">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  重新分析
-                </Button>
+                <div className="w-24 h-px bg-slate-300 dark:bg-slate-600 mx-auto"></div>
               </div>
 
               {/* 使用紧凑版合盘结果组件 */}
-              <CompactHepanResult result={result} />
+              <div className="mb-8">
+                <CompactHepanResult result={result} />
+              </div>
 
               {/* 操作按钮 */}
-              <div className="text-center space-x-4 mb-8">
+              <div className="flex flex-wrap justify-center gap-3 mb-8">
                 <Button onClick={handleReset} className="bg-slate-700 dark:bg-slate-600 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-serif">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   重新分析
@@ -773,9 +782,11 @@ ${data.ai_analysis}
                         {/* 分享图片预览 */}
                         <div className="mb-6 flex justify-center">
                           <div className="relative">
-                            <img 
+                            <Image 
                               src={shareImageUrl} 
                               alt="合盘分析分享图片" 
+                              width={384}
+                              height={384}
                               className="max-w-sm w-full h-auto rounded-lg shadow-lg border border-rose-200 dark:border-rose-700"
                             />
                             <div className="absolute -top-3 -right-3 bg-rose-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">

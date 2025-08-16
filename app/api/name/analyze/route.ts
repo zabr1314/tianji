@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { NameAnalysisCalculator } from '@/lib/name/calculator'
-import { TianjiPointsService, AnalysisRecordsService } from '@/lib/database/services'
+import { TianjiPointsService, AnalysisRecordsService, NameAnalysisService } from '@/lib/database/services'
 import OpenAI from 'openai'
 
 // 初始化DeepSeek客户端
@@ -89,6 +89,75 @@ export async function POST(request: NextRequest) {
 
     // 计算服务费用（120天机点）
     const cost = 120
+
+    // 保存姓名分析结果到数据库
+    const analysisData = {
+      user_id: user.id,
+      name_to_analyze: body.name,
+      analysis_type: body.analysis_type,
+      birth_date: body.birth_date || null,
+      birth_time: body.birth_time || null,
+      birth_city: body.birth_city || null,
+      gender: body.gender || null,
+      analysis_result: {
+        ...nameAnalysis,
+        scores: nameAnalysis.scores,
+        ai_analysis: aiAnalysis
+      },
+      ai_analysis: aiAnalysis,
+      points_cost: cost
+    }
+
+    // 保存到姓名分析表
+    const savedAnalysis = await NameAnalysisService.saveAnalysis(analysisData)
+    
+    if (!savedAnalysis) {
+      console.error('Failed to save name analysis to database')
+      // 不影响返回结果，但记录错误
+    }
+
+    // 扣除天机点
+    const pointsDeducted = await TianjiPointsService.spendPoints(
+      user.id,
+      cost,
+      'name',
+      `姓名分析：${body.name}`,
+      savedAnalysis?.id
+    )
+
+    if (!pointsDeducted) {
+      console.error('Failed to deduct tianji points')
+      // 不影响返回结果，但记录错误
+    }
+
+    // 保存到统一历史记录表
+    if (savedAnalysis) {
+      const historyData = {
+        userId: user.id,
+        analysisType: 'name' as const,
+        title: `姓名分析：${body.name}`,
+        summary: body.analysis_type === 'current' ? '当前姓名分析' : '姓名建议分析',
+        inputData: {
+          name: body.name,
+          analysis_type: body.analysis_type,
+          birth_date: body.birth_date,
+          birth_time: body.birth_time,
+          birth_city: body.birth_city,
+          gender: body.gender
+        },
+        outputData: {
+          ...nameAnalysis,
+          ai_analysis: aiAnalysis
+        },
+        pointsCost: cost
+      }
+
+      const historyRecord = await AnalysisRecordsService.saveRecord(historyData)
+      
+      if (!historyRecord) {
+        console.error('Failed to save analysis to history records')
+      }
+    }
 
     const response = {
       success: true,

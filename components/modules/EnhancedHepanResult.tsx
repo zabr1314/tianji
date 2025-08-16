@@ -19,8 +19,8 @@ import {
   Shield,
   Baby,
   Gem,
-  Yin,
-  Yang,
+  Sun,
+  Moon,
   TreePine
 } from 'lucide-react'
 
@@ -284,7 +284,7 @@ export function EnhancedHepanResult({ result }: EnhancedHepanResultProps) {
                 <div className="flex items-center space-x-2">
                   <Target className="h-4 w-4 text-red-500" />
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400">日主相配度</span>
-                  <Info className="h-3 w-3 text-slate-400 cursor-help" title="代表两人本质性格的融洽程度" />
+                  <Info className="h-3 w-3 text-slate-400 cursor-help" />
                 </div>
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                   {Math.round((result.compatibility.ganzhi_compatibility + result.compatibility.yongshen_compatibility) / 2)}分
@@ -299,7 +299,7 @@ export function EnhancedHepanResult({ result }: EnhancedHepanResultProps) {
                 <div className="flex items-center space-x-2">
                   <Zap className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400">五行互补度</span>
-                  <Info className="h-3 w-3 text-slate-400 cursor-help" title="双方五行能量的平衡与互补" />
+                  <Info className="h-3 w-3 text-slate-400 cursor-help" />
                 </div>
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{result.compatibility.wuxing_compatibility}分</span>
               </div>
@@ -312,7 +312,7 @@ export function EnhancedHepanResult({ result }: EnhancedHepanResultProps) {
                 <div className="flex items-center space-x-2">
                   <Heart className="h-4 w-4 text-rose-500" />
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400">夫妻宫和合</span>
-                  <Info className="h-3 w-3 text-slate-400 cursor-help" title="日支关系，决定婚姻和谐度" />
+                  <Info className="h-3 w-3 text-slate-400 cursor-help" />
                 </div>
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{result.compatibility.ganzhi_compatibility}分</span>
               </div>
@@ -325,7 +325,7 @@ export function EnhancedHepanResult({ result }: EnhancedHepanResultProps) {
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-green-500" />
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400">大运同步性</span>
-                  <Info className="h-3 w-3 text-slate-400 cursor-help" title="未来运势发展的协调程度" />
+                  <Info className="h-3 w-3 text-slate-400 cursor-help" />
                 </div>
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{result.compatibility.dayun_compatibility}分</span>
               </div>

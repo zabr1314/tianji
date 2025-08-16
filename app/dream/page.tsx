@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Moon, Sparkles, RefreshCw, Brain, Heart, Star, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react'
+import { Moon, Sparkles, RefreshCw, Brain, Heart, Star, TrendingUp, AlertCircle, Lightbulb, Download, Share2, Copy, Check } from 'lucide-react'
 import { DreamCategory, DreamMood } from '@/lib/dream/calculator'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { LightweightMarkdown } from '@/components/ui/lightweight-markdown'
 
 interface DreamInterpretationResult {
   success: boolean
@@ -83,6 +83,11 @@ export default function DreamInterpretationPage() {
   const [result, setResult] = useState<DreamInterpretationResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
+  const [showShareImage, setShowShareImage] = useState(false)
 
   const validateForm = (): boolean => {
     const { dream_content, dream_category, dream_mood } = formData
@@ -148,6 +153,106 @@ export default function DreamInterpretationPage() {
   const handleReset = () => {
     setResult(null)
     setError(null)
+    setShareImageUrl(null)
+    setShowShareImage(false)
+  }
+
+  // 保存报告功能
+  const handleSaveReport = async () => {
+    if (!result) return
+    
+    setIsSaving(true)
+    try {
+      // 生成PDF报告内容
+      const reportContent = generateDreamReportContent(result)
+      
+      // 创建并下载文件
+      const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `梦境解析报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('保存报告失败:', error)
+      alert('保存报告失败，请稍后重试')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // 分享梦境解析结果
+  const handleShareResult = async () => {
+    if (!result) return
+    
+    setIsSharing(true)
+    try {
+      // 生成分享图片
+      const shareImageBlob = await generateDreamShareImage(result)
+      
+      if (shareImageBlob) {
+        // 创建图片URL用于页面显示
+        const imageUrl = URL.createObjectURL(shareImageBlob)
+        setShareImageUrl(imageUrl)
+        setShowShareImage(true)
+      } else {
+        // 降级方案：文本分享
+        const shareText = `🌙 我在天机AI完成了梦境解析！
+✨ 梦境分类：${result.dream_input.category}
+💭 情绪状态：${result.dream_input.mood}
+🔮 AI为我揭示了深层的心理状态和人生指引
+🌟 来体验专业的梦境解析吧！
+#天机AI #梦境解析 #AI解梦`
+        
+        if (navigator.share) {
+          await navigator.share({
+            title: '我的梦境解析报告',
+            text: shareText,
+            url: window.location.href
+          })
+        } else {
+          await navigator.clipboard.writeText(shareText)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        }
+      }
+    } catch (error) {
+      console.error('分享失败:', error)
+      try {
+        const shareText = `天机AI - 梦境解析报告\n\n梦境分类：${result.dream_input.category}\n情绪状态：${result.dream_input.mood}\n\n查看详情：${window.location.href}`
+        await navigator.clipboard.writeText(shareText)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } catch (clipboardError) {
+        alert('分享失败，请稍后重试')
+      }
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  // 关闭分享图片显示
+  const handleCloseShareImage = () => {
+    setShowShareImage(false)
+    if (shareImageUrl) {
+      URL.revokeObjectURL(shareImageUrl)
+      setShareImageUrl(null)
+    }
+  }
+
+  // 下载分享图片
+  const handleDownloadShareImage = () => {
+    if (!shareImageUrl) return
+    
+    const a = document.createElement('a')
+    a.href = shareImageUrl
+    a.download = `梦境解析分享_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   const getQualityColor = (score: number) => {
@@ -162,6 +267,212 @@ export default function DreamInterpretationPage() {
     if (score >= 6) return '较高'
     if (score >= 4) return '中等'
     return '一般'
+  }
+
+  // 生成梦境解析报告内容
+  const generateDreamReportContent = (data: DreamInterpretationResult): string => {
+    const date = new Date().toLocaleDateString('zh-CN')
+    return `
+==============================
+          梦境解析报告
+==============================
+
+生成时间：${date}
+梦境分类：${data.dream_input.category}
+情绪状态：${data.dream_input.mood}
+
+==============================
+           梦境摘要
+==============================
+${data.analysis.dream_summary}
+
+==============================
+          梦境质量评估
+==============================
+清晰度：${data.analysis.dream_quality.clarity_score}/10 (${getQualityLabel(data.analysis.dream_quality.clarity_score)})
+情感强度：${data.analysis.dream_quality.emotional_intensity}/10 (${getQualityLabel(data.analysis.dream_quality.emotional_intensity)})
+象征丰富度：${data.analysis.dream_quality.symbolic_richness}/10 (${getQualityLabel(data.analysis.dream_quality.symbolic_richness)})
+整体重要性：${data.analysis.dream_quality.overall_significance}/10 (${getQualityLabel(data.analysis.dream_quality.overall_significance)})
+
+==============================
+           心理状态分析
+==============================
+情绪状态：${data.analysis.psychological_analysis.emotional_state}
+
+潜意识主题：
+${data.analysis.psychological_analysis.subconscious_themes.map(theme => `• ${theme}`).join('\n')}
+
+压力指标：
+${data.analysis.psychological_analysis.stress_indicators.map(indicator => `• ${indicator}`).join('\n')}
+
+==============================
+           象征解读
+==============================
+${data.analysis.symbolic_interpretation.key_symbols.map(symbol => `
+【${symbol.symbol}】
+传统含义：${symbol.traditional_meaning}
+心理学含义：${symbol.psychological_meaning}
+个人相关性：${symbol.personal_relevance}
+`).join('\n')}
+
+==============================
+           生活指导
+==============================
+当前状况洞察：
+${data.analysis.life_guidance.current_situation_insights.map(insight => `• ${insight}`).join('\n')}
+
+情感需求：
+${data.analysis.life_guidance.emotional_needs.map(need => `• ${need}`).join('\n')}
+
+成长机会：
+${data.analysis.life_guidance.growth_opportunities.map(opportunity => `• ${opportunity}`).join('\n')}
+
+建议行动：
+${data.analysis.life_guidance.recommended_actions.map(action => `• ${action}`).join('\n')}
+
+==============================
+           警示与建议
+==============================
+健康提醒：
+${data.analysis.warnings_and_suggestions.health_reminders.map(reminder => `• ${reminder}`).join('\n')}
+
+精神启示：
+${data.analysis.warnings_and_suggestions.spiritual_messages.map(message => `• ${message}`).join('\n')}
+
+==============================
+          AI深度解读
+==============================
+${data.ai_interpretation}
+
+==============================
+本次分析消耗：${data.cost} 天机点
+报告由天机AI生成 - 仅供参考
+==============================`
+  }
+
+  // 生成分享图片
+  const generateDreamShareImage = async (data: DreamInterpretationResult): Promise<Blob | null> => {
+    try {
+      // 动态导入html2canvas
+      const html2canvas = await import('html2canvas').then(module => module.default)
+      
+      // 创建分享内容元素
+      const shareElement = document.createElement('div')
+      shareElement.style.cssText = `
+        width: 450px;
+        height: 800px;
+        background: linear-gradient(135deg, #fef7ed 0%, #fed7aa 50%, #fdba74 100%);
+        font-family: serif;
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      `
+      
+      // 提取关键解析内容
+      const keyInsights = extractDreamKeyContent(data)
+      
+      shareElement.innerHTML = `
+        <div style="padding: 32px 24px; height: 100%; display: flex; flex-direction: column; color: #8b4513;">
+          <!-- 标题区域 -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="background: #dc2626; color: white; display: inline-block; padding: 12px 20px; border-radius: 8px; font-size: 20px; font-weight: bold; margin-bottom: 8px;">
+              我的梦境解析报告
+            </div>
+            <div style="font-size: 14px; color: #a16207;">天机AI · 个性解读</div>
+          </div>
+          
+          <!-- 梦境特征 -->
+          <div style="background: rgba(255,255,255,0.8); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 16px;">🌙</span>
+              <span style="font-weight: bold; margin-left: 8px; font-size: 14px;">梦境特征</span>
+            </div>
+            <div style="font-size: 12px; line-height: 1.6;">
+              <div style="margin-bottom: 4px;"><strong>分类：</strong>${data.dream_input.category}</div>
+              <div style="margin-bottom: 4px;"><strong>情绪：</strong>${data.dream_input.mood}</div>
+              <div><strong>整体重要性：</strong>${data.analysis.dream_quality.overall_significance}/10</div>
+            </div>
+          </div>
+          
+          <!-- 心理解读 -->
+          <div style="background: rgba(255,255,255,0.8); border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 2px solid #f59e0b;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 16px;">🧠</span>
+              <span style="font-weight: bold; margin-left: 8px; font-size: 14px;">心理解读</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.5; color: #7c2d12;">
+              ${keyInsights.psychology}
+            </div>
+          </div>
+          
+          <!-- 生活指导 -->
+          <div style="background: rgba(255,255,255,0.8); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 2px solid #f59e0b; flex: 1;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+              <span style="font-size: 16px;">✨</span>
+              <span style="font-weight: bold; margin-left: 8px; font-size: 14px;">生活指导</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.5; color: #7c2d12;">
+              ${keyInsights.guidance}
+            </div>
+          </div>
+          
+          <!-- 底部装饰 -->
+          <div style="text-align: center; padding-top: 16px; border-top: 2px solid #f59e0b;">
+            <div style="font-size: 12px; color: #a16207; font-weight: bold;">扫码体验专业的AI梦境解析</div>
+          </div>
+        </div>
+      `
+      
+      document.body.appendChild(shareElement)
+      
+      // 使用html2canvas生成图片
+      const canvas = await html2canvas(shareElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#fef7ed',
+        width: 450,
+        height: 800,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 450,
+        windowHeight: 800
+      })
+      
+      document.body.removeChild(shareElement)
+      
+      // 转换为Blob
+      return new Promise((resolve) => {
+        canvas.toBlob(resolve, 'image/png')
+      })
+    } catch (error) {
+      console.error('生成分享图片失败:', error)
+      return null
+    }
+  }
+
+  // 提取梦境关键解析内容
+  const extractDreamKeyContent = (data: DreamInterpretationResult) => {
+    // 提取心理解读关键内容
+    const psychology = data.analysis.psychological_analysis.emotional_state.length > 60 
+      ? data.analysis.psychological_analysis.emotional_state.substring(0, 60) + '...' 
+      : data.analysis.psychological_analysis.emotional_state
+    
+    // 提取生活指导关键内容
+    const topGuidance = data.analysis.life_guidance.current_situation_insights.slice(0, 2)
+    const guidance = topGuidance.length > 0 
+      ? topGuidance.join('；').length > 80 
+        ? topGuidance.join('；').substring(0, 80) + '...'
+        : topGuidance.join('；')
+      : '暂无指导内容'
+    
+    return {
+      psychology,
+      guidance
+    }
   }
 
   return (
@@ -821,7 +1132,10 @@ export default function DreamInterpretationPage() {
                   {/* AI解读内容 - Markdown格式支持 */}
                   <div className="bg-white/90 dark:bg-slate-900/90 rounded-lg p-6 border border-amber-200 dark:border-amber-700 shadow-lg">
                     <div className="max-w-none">
-                      <ReactMarkdown
+                      <LightweightMarkdown
+                        content={result.ai_interpretation}
+                      />
+                      {/* <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           // 段落 - 统一格式
@@ -895,7 +1209,7 @@ export default function DreamInterpretationPage() {
                           ),
                           // 列表项 - 统一格式
                           li: ({children, ...props}) => {
-                            const isOrdered = props.ordered;
+                            const isOrdered = (props as any).ordered;
                             return (
                               <li className={`${isOrdered ? 'list-decimal' : 'list-disc'} list-inside text-slate-700 dark:text-slate-300 leading-relaxed pl-2`}>
                                 <span className="ml-2 font-serif">{children}</span>
@@ -903,7 +1217,8 @@ export default function DreamInterpretationPage() {
                             )
                           },
                           // 代码
-                          code: ({children, inline}) => {
+                          code: ({children, ...props}) => {
+                            const inline = (props as any).inline;
                             if (inline) {
                               return (
                                 <code className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-sm font-mono">
@@ -937,7 +1252,7 @@ export default function DreamInterpretationPage() {
                         }}
                       >
                         {result.ai_interpretation}
-                      </ReactMarkdown>
+                      </ReactMarkdown> */}
                     </div>
                     
                     {/* 底部装饰 */}
@@ -963,20 +1278,94 @@ export default function DreamInterpretationPage() {
                     解析其他梦境
                   </Button>
                   <Button 
+                    onClick={handleSaveReport}
+                    disabled={isSaving}
                     variant="outline" 
                     className="border-2 border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 font-serif px-8 py-3"
                   >
-                    <Star className="h-5 w-5 mr-2" />
-                    保存到收藏
+                    {isSaving ? (
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="h-5 w-5 mr-2" />
+                    )}
+                    {isSaving ? '保存中...' : '保存报告'}
                   </Button>
                   <Button 
+                    onClick={handleShareResult}
+                    disabled={isSharing}
                     variant="outline" 
                     className="border-2 border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 font-serif px-8 py-3"
                   >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    分享解析结果
+                    {copied ? (
+                      <Check className="h-5 w-5 mr-2 text-green-500" />
+                    ) : isSharing ? (
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <Share2 className="h-5 w-5 mr-2" />
+                    )}
+                    {copied ? '已复制' : isSharing ? '分享中...' : '分享结果'}
                   </Button>
                 </div>
+
+                {/* 分享图片显示区域 */}
+                {showShareImage && shareImageUrl && (
+                  <div className="mt-8">
+                    <Card className="bg-gradient-to-br from-amber-50/90 to-orange-50/90 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800/50">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xl font-serif font-bold text-amber-800 dark:text-amber-200">
+                            🌙 分享图片已生成
+                          </CardTitle>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCloseShareImage}
+                            className="text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="text-center">
+                          <p className="text-amber-700 dark:text-amber-300 font-serif mb-6">
+                            您的梦境解析图片已按照宋代美学风格生成，适合分享到小红书等社交平台
+                          </p>
+                          
+                          {/* 分享图片预览 */}
+                          <div className="mb-6 flex justify-center">
+                            <div className="relative">
+                              <Image 
+                                src={shareImageUrl} 
+                                alt="梦境解析分享图片" 
+                                width={384}
+                                height={384}
+                                className="max-w-sm w-full h-auto rounded-lg shadow-lg border border-amber-200 dark:border-amber-700"
+                              />
+                              <div className="absolute -top-3 -right-3 bg-amber-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                                🌙
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* 操作按钮 */}
+                          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <Button
+                              onClick={handleDownloadShareImage}
+                              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-serif px-6 py-2"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              下载图片
+                            </Button>
+                            <p className="text-sm text-amber-600 dark:text-amber-400 font-serif">
+                              建议保存到相册后分享到社交平台
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
                 
                 {/* 底部装饰 */}
                 <div className="flex items-center justify-center mt-8 text-amber-600 dark:text-amber-400">

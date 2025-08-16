@@ -1,8 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { ChevronDown, ChevronUp, Heart, Briefcase, Home, DollarSign, Shield } from 'lucide-react'
 
 interface CompactHepanResultData {
   success: boolean
@@ -71,32 +74,35 @@ interface CompactHepanResultProps {
 }
 
 export function CompactHepanResult({ result }: CompactHepanResultProps) {
+  const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(true)
+  const [scoreAnimated, setScoreAnimated] = useState(false)
+  
   // 优化评分算法，让分数稍微高一点
   const optimizeScore = (originalScore: number): number => {
     const adjusted = Math.min(95, Math.round(originalScore * 1.15 + 8))
     return adjusted
   }
 
-  // 获取关系类型配置
+  // 获取关系类型配置 - 雅黑色系宋代美学
   const getRelationshipConfig = (score: number, type?: string) => {
     const configs = {
       couple: {
-        colors: ['text-pink-600', 'bg-pink-50', 'border-pink-200'],
+        colors: ['text-slate-800', 'bg-slate-50', 'border-slate-200'],
         labels: score >= 85 ? '天作之合' : score >= 75 ? '佳偶天成' : score >= 65 ? '相濡以沫' : score >= 50 ? '磨合成长' : '需要努力',
         icon: '💕'
       },
       friends: {
-        colors: ['text-blue-600', 'bg-blue-50', 'border-blue-200'],
+        colors: ['text-slate-800', 'bg-slate-50', 'border-slate-200'],
         labels: score >= 85 ? '知音难觅' : score >= 75 ? '志同道合' : score >= 65 ? '相处融洽' : score >= 50 ? '友情可期' : '需要磨合',
         icon: '🤝'
       },
       colleagues: {
-        colors: ['text-green-600', 'bg-green-50', 'border-green-200'], 
+        colors: ['text-slate-800', 'bg-slate-50', 'border-slate-200'], 
         labels: score >= 85 ? '黄金搭档' : score >= 75 ? '合作无间' : score >= 65 ? '配合默契' : score >= 50 ? '互补共赢' : '需要协调',
         icon: '💼'
       },
       family: {
-        colors: ['text-amber-600', 'bg-amber-50', 'border-amber-200'],
+        colors: ['text-slate-800', 'bg-slate-50', 'border-slate-200'],
         labels: score >= 85 ? '血浓于水' : score >= 75 ? '家和万事兴' : score >= 65 ? '亲情深厚' : score >= 50 ? '家庭和睦' : '需要包容',
         icon: '🏠'
       }
@@ -105,6 +111,14 @@ export function CompactHepanResult({ result }: CompactHepanResultProps) {
     const key = (type as keyof typeof configs) || 'couple'
     return configs[key] || configs.couple
   }
+
+  // 触发评分动画
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setScoreAnimated(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
 
   // 十神关系分析
   const getTianshenRelation = (person1Bazi: any, person2Bazi: any) => {
@@ -173,310 +187,295 @@ export function CompactHepanResult({ result }: CompactHepanResultProps) {
   const childrenFate = getChildrenFate(result.person1.bazi, result.person2.bazi)
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-slate-50 to-amber-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 min-h-screen -m-4 p-6">
-      {/* 古典装饰背景 */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-16 left-16 w-32 h-32 border-2 border-amber-300 dark:border-amber-700 rounded-full opacity-20"></div>
-        <div className="absolute bottom-32 right-32 w-24 h-24 border border-slate-400 dark:border-slate-600 rounded-full opacity-30"></div>
-        <div className="absolute top-1/3 right-1/4 w-4 h-4 bg-amber-400 dark:bg-amber-600 rounded-full opacity-40"></div>
-        <div className="absolute bottom-1/3 left-1/4 w-2 h-2 bg-slate-400 dark:bg-slate-600 rounded-full opacity-50"></div>
+    <div className="bg-gradient-to-br from-slate-100 via-gray-50 to-stone-100 dark:from-slate-900 dark:via-slate-800 dark:to-gray-900 min-h-screen -m-4 p-6 relative">
+      {/* 雅黑风格宋代装饰背景 */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        {/* 古典圆形装饰 */}
+        <div className="absolute top-32 left-32 w-64 h-64 border-4 border-slate-300 dark:border-slate-600 rounded-full opacity-15"></div>
+        <div className="absolute bottom-40 right-32 w-48 h-48 border-2 border-slate-400 dark:border-slate-500 rounded-full opacity-20"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 border border-gray-400 dark:border-gray-600 rounded-full opacity-25"></div>
+        
+        {/* 宋代风格几何图案 */}
+        <div className="absolute top-20 right-20 w-16 h-16 border-2 border-slate-500 dark:border-slate-400 opacity-30 transform rotate-45"></div>
+        <div className="absolute bottom-20 left-20 w-12 h-12 border border-gray-500 dark:border-gray-400 opacity-25 transform rotate-12"></div>
+        
+        {/* 散点装饰 */}
+        <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-slate-500 dark:bg-slate-400 rounded-full opacity-40"></div>
+        <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-gray-600 dark:bg-gray-400 rounded-full opacity-45"></div>
+        <div className="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-slate-600 dark:bg-slate-300 rounded-full opacity-35"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        {/* 合盘匹配度总览 */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 dark:border-slate-700 p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 border-4 border-amber-300 dark:border-amber-600 mb-6 shadow-lg">
-              <div>
-                <div className="text-4xl font-bold text-amber-700 dark:text-amber-400 font-serif">{optimizeScore(result.compatibility.overall_score)}</div>
-                <div className="text-sm text-amber-600 dark:text-amber-400 font-medium font-serif">综合匹配</div>
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 font-serif">{relationConfig.icon} {relationConfig.labels}</h2>
-            <p className="text-slate-600 dark:text-slate-400 font-serif">{result.person1.name} & {result.person2.name} 的缘分解析</p>
-          </div>
-
-          {/* 合盘详细评分 */}
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4 font-serif border-b border-amber-200 dark:border-slate-600 pb-2">合盘匹配度</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">五行相合</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{width: `${optimizeScore(result.compatibility.wuxing_compatibility)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 w-12 font-serif">{optimizeScore(result.compatibility.wuxing_compatibility)}分</span>
-                  </div>
-                </div>
+      <div className="max-w-5xl mx-auto space-y-8 relative z-10">
+        {/* 核心评分区域 - 雅黑风格宋代典雅 */}
+        <Card className="bg-white/95 dark:bg-slate-900/95 border-slate-300 dark:border-slate-600 shadow-2xl rounded-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-100 via-gray-100 to-stone-100 dark:from-slate-800 dark:via-slate-700 dark:to-gray-800 p-8 border-b-2 border-slate-200 dark:border-slate-600">
+            <div className="text-center">
+              {/* 雅黑风格主评分 */}
+              <div className="relative inline-flex items-center justify-center w-40 h-40 mb-6">
+                {/* 外层装饰圆环 */}
+                <div className="absolute inset-0 rounded-full border-4 border-slate-400 dark:border-slate-500 opacity-25"></div>
+                <div className="absolute inset-2 rounded-full border-2 border-gray-400 dark:border-gray-500 opacity-35"></div>
                 
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">干支相合</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-green-500 h-2 rounded-full" style={{width: `${optimizeScore(result.compatibility.ganzhi_compatibility)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 w-12 font-serif">{optimizeScore(result.compatibility.ganzhi_compatibility)}分</span>
+                {/* 评分核心区域 */}
+                <div className="relative flex flex-col items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 shadow-lg border-2 border-slate-500 dark:border-slate-400">
+                  <div className={`text-4xl font-bold font-serif text-slate-800 dark:text-slate-200 transition-all duration-1000 ${scoreAnimated ? 'scale-100' : 'scale-0'}`}>
+                    {optimizeScore(result.compatibility.overall_score)}
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">用神相配</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-purple-500 h-2 rounded-full" style={{width: `${optimizeScore(result.compatibility.yongshen_compatibility)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 w-12 font-serif">{optimizeScore(result.compatibility.yongshen_compatibility)}分</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">大运同步</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-orange-500 h-2 rounded-full" style={{width: `${optimizeScore(result.compatibility.dayun_compatibility)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 w-12 font-serif">{dayunSync.score}分</span>
-                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400 font-serif tracking-wide">综合匹配</div>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4 font-serif border-b border-amber-200 dark:border-slate-600 pb-2">生活领域评分</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">💕 感情和谐</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-red-500 h-2 rounded-full" style={{width: `${optimizeScore(result.detailed_scores.love_score)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-red-600 dark:text-red-400 w-12 font-serif">{optimizeScore(result.detailed_scores.love_score)}分</span>
+              
+              {/* 关系标签 - 雅黑风格 */}
+              <div className="mb-6">
+                <div className="inline-block relative">
+                  <div className="bg-gradient-to-r from-slate-200 to-gray-200 dark:from-slate-700 dark:to-gray-700 px-8 py-3 rounded-lg border-2 border-slate-300 dark:border-slate-500 shadow-md">
+                    <span className="text-xl font-serif font-bold text-slate-800 dark:text-slate-200">
+                      {relationConfig.icon} {relationConfig.labels}
+                    </span>
                   </div>
+                  {/* 装饰角标 */}
+                  <div className="absolute -top-1 -left-1 w-3 h-3 bg-slate-500 dark:bg-slate-400 rounded-full"></div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gray-500 dark:bg-gray-400 rounded-full"></div>
                 </div>
-                
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">💼 事业协作</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{width: `${optimizeScore(result.detailed_scores.career_score)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 w-12 font-serif">{optimizeScore(result.detailed_scores.career_score)}分</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">💰 财运相合</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-yellow-500 h-2 rounded-full" style={{width: `${optimizeScore(result.detailed_scores.wealth_score)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 w-12 font-serif">{optimizeScore(result.detailed_scores.wealth_score)}分</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between bg-amber-50 dark:bg-slate-800 p-3 rounded-lg">
-                  <span className="text-sm text-slate-600 dark:text-slate-400 font-serif">👨‍👩‍👧‍👦 家庭和睦</span>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                      <div className="bg-purple-500 h-2 rounded-full" style={{width: `${optimizeScore(result.detailed_scores.family_score)}%`}}></div>
-                    </div>
-                    <span className="text-sm font-semibold text-purple-600 dark:text-purple-400 w-12 font-serif">{optimizeScore(result.detailed_scores.family_score)}分</span>
-                  </div>
-                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200">
+                  {result.person1.name} 与 {result.person2.name}
+                </h2>
+                <div className="w-24 h-px bg-slate-500 dark:bg-slate-400 mx-auto"></div>
+                <p className="text-slate-600 dark:text-slate-400 font-serif text-lg">八字合盘解析</p>
               </div>
             </div>
           </div>
+        </Card>
+
+        {/* 雅黑风格维度卡片 */}
+        <div className="grid md:grid-cols-4 gap-6">
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 rounded-lg group">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900 dark:to-rose-900 border-2 border-red-300 dark:border-red-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
+                <Heart className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-sm font-serif font-medium text-slate-700 dark:text-slate-300 mb-3 tracking-wide">感情和谐</h3>
+              <div className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-3">
+                {optimizeScore(result.detailed_scores.love_score)}
+                <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">分</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-red-500 to-rose-500 h-full rounded-full transition-all duration-1000 shadow-sm" 
+                  style={{width: `${optimizeScore(result.detailed_scores.love_score)}%`}} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 rounded-lg group">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 border-2 border-blue-300 dark:border-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
+                <Briefcase className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-sm font-serif font-medium text-slate-700 dark:text-slate-300 mb-3 tracking-wide">事业协作</h3>
+              <div className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-3">
+                {optimizeScore(result.detailed_scores.career_score)}
+                <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">分</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-1000 shadow-sm" 
+                  style={{width: `${optimizeScore(result.detailed_scores.career_score)}%`}} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 rounded-lg group">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900 dark:to-yellow-900 border-2 border-amber-300 dark:border-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
+                <DollarSign className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="text-sm font-serif font-medium text-slate-700 dark:text-slate-300 mb-3 tracking-wide">财运相合</h3>
+              <div className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-3">
+                {optimizeScore(result.detailed_scores.wealth_score)}
+                <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">分</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 h-full rounded-full transition-all duration-1000 shadow-sm" 
+                  style={{width: `${optimizeScore(result.detailed_scores.wealth_score)}%`}} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 rounded-lg group">
+            <CardContent className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 border-2 border-green-300 dark:border-green-600 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-md">
+                <Home className="w-8 h-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-sm font-serif font-medium text-slate-700 dark:text-slate-300 mb-3 tracking-wide">家庭和睦</h3>
+              <div className="text-2xl font-serif font-bold text-slate-800 dark:text-slate-200 mb-3">
+                {optimizeScore(result.detailed_scores.family_score)}
+                <span className="text-sm text-slate-600 dark:text-slate-400 ml-1">分</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 shadow-inner">
+                <div 
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-full rounded-full transition-all duration-1000 shadow-sm" 
+                  style={{width: `${optimizeScore(result.detailed_scores.family_score)}%`}} 
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* 合盘关系分析 */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 dark:border-slate-700 p-8">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-8 text-center font-serif">⚡ 合盘关系分析</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* 十神关系 */}
-            <div>
-              <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4 font-serif">🔮 十神关系</h4>
-              <div className="space-y-3">
-                {tianshenRelations.map((relation, index) => (
-                  <div key={index} className="bg-amber-50 dark:bg-slate-700 p-4 rounded-xl border border-amber-200 dark:border-slate-600 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 font-serif">{relation.name}</span>
-                      <span className="text-xs bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-full font-serif">相合</span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 font-serif leading-relaxed">{relation.compatibility}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 大运同步性 */}
-            <div>
-              <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4 font-serif">🌟 大运同步性</h4>
-              <div className="bg-amber-50 dark:bg-slate-700 p-4 rounded-xl border border-amber-200 dark:border-slate-600 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400 font-serif">同步等级</span>
-                  <span className="text-sm font-semibold text-orange-600 dark:text-orange-400 font-serif">{dayunSync.level}</span>
-                </div>
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-slate-600 dark:text-slate-400 font-serif">同步评分</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 font-serif">{dayunSync.score}分</span>
-                  </div>
-                  <div className="w-full bg-amber-200 dark:bg-slate-600 rounded-full h-2">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{width: `${dayunSync.score}%`}}></div>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 font-serif leading-relaxed">{dayunSync.description}</p>
-              </div>
-            </div>
-
-            {/* 子女缘分 */}
-            <div>
-              <h4 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4 font-serif">👶 子女缘分</h4>
-              <div className="bg-amber-50 dark:bg-slate-700 p-4 rounded-xl border border-amber-200 dark:border-slate-600 shadow-sm">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600 dark:text-slate-400 font-serif">子女运势</span>
-                    <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 font-serif">{childrenFate.childrenLuck}分</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600 dark:text-slate-400 font-serif">教育观念</span>
-                    <span className="text-xs font-semibold text-green-600 dark:text-green-400 font-serif">{childrenFate.educationHarmony}分</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600 dark:text-slate-400 font-serif">家庭氛围</span>
-                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 font-serif">{childrenFate.familyAtmosphere}分</span>
-                  </div>
-                  <div className="pt-2 border-t border-amber-200 dark:border-slate-600">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400 font-serif">综合评分</span>
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 font-serif">{childrenFate.overall}分</span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 font-serif leading-relaxed">{childrenFate.analysis}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 关系建议 */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 dark:border-slate-700 p-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4 text-center font-serif">✨ 关系发展建议</h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-base font-semibold text-green-600 dark:text-green-400 mb-3 font-serif">💪 关系优势</h4>
-              <div className="space-y-2">
-                {result.analysis.strengths.slice(0, 2).map((strength, index) => (
-                  <div key={index} className="flex items-start space-x-2 bg-green-50 dark:bg-green-950/30 p-3 rounded-lg border border-green-200 dark:border-green-800">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 font-serif leading-relaxed">{strength}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="text-base font-semibold text-orange-600 dark:text-orange-400 mb-3 font-serif">⚠️ 需要关注</h4>
-              <div className="space-y-2">
-                {result.analysis.challenges.slice(0, 2).map((challenge, index) => (
-                  <div key={index} className="flex items-start space-x-2 bg-orange-50 dark:bg-orange-950/30 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
-                    <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 font-serif leading-relaxed">{challenge}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4">
-            <h4 className="text-base font-semibold text-blue-600 dark:text-blue-400 mb-3 font-serif">💡 实用建议</h4>
-            <div className="grid gap-2">
-              {result.analysis.suggestions.slice(0, 2).map((suggestion, index) => (
-                <div key={index} className="flex items-start space-x-2 bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 font-serif">
+        {/* 雅黑风格关系分析 */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 rounded-lg shadow-lg">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-600 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800">
+              <CardTitle className="text-lg font-serif text-slate-800 dark:text-slate-200 flex items-center justify-center">
+                <span className="w-8 h-8 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center text-white mr-3 text-sm">吉</span>
+                关系亮点
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              {result.analysis.strengths.slice(0, 3).map((strength, index) => (
+                <div key={index} className="flex items-start space-x-3 p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-700 shadow-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-emerald-500 dark:from-green-600 dark:to-emerald-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
                     {index + 1}
                   </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-serif leading-relaxed">{suggestion}</p>
+                  <p className="text-sm font-serif text-slate-800 dark:text-slate-200 leading-relaxed">{strength}</p>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-600 rounded-lg shadow-lg">
+            <CardHeader className="border-b border-slate-200 dark:border-slate-600 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800">
+              <CardTitle className="text-lg font-serif text-slate-800 dark:text-slate-200 flex items-center justify-center">
+                <span className="w-8 h-8 bg-orange-600 dark:bg-orange-500 rounded-full flex items-center justify-center text-white mr-3 text-sm">注</span>
+                需要关注
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              {result.analysis.challenges.slice(0, 3).map((challenge, index) => (
+                <div key={index} className="flex items-start space-x-3 p-4 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-700 shadow-sm">
+                  <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-red-500 dark:from-orange-600 dark:to-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm font-serif text-slate-800 dark:text-slate-200 leading-relaxed">{challenge}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* AI深度分析区域 */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-200 dark:border-slate-700 p-6">
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center space-x-3">
-              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-white text-sm font-bold font-serif">AI</span>
-              </div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 font-serif">深度分析解读</h2>
+        {/* 雅黑风格详细分析 */}
+        <Card className="bg-white/95 dark:bg-slate-900/95 border-slate-200 dark:border-slate-600 rounded-lg shadow-lg">
+          <CardHeader className="border-b border-slate-200 dark:border-slate-600 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-serif text-slate-800 dark:text-slate-200 flex items-center">
+                <span className="w-8 h-8 bg-slate-600 dark:bg-slate-500 rounded-full flex items-center justify-center text-white mr-3 text-sm font-bold">解</span>
+                详细分析解读
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDetailedAnalysis(!showDetailedAnalysis)}
+                className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/30 font-serif"
+              >
+                {showDetailedAnalysis ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+                {showDetailedAnalysis ? '收起' : '展开'}
+              </Button>
             </div>
-            <div className="w-16 h-px bg-amber-300 dark:bg-amber-600 mx-auto mt-2"></div>
-          </div>
-          <div className="bg-amber-50 dark:bg-slate-700 rounded-xl p-6 border border-amber-200 dark:border-slate-600 shadow-inner">
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-              {result.ai_analysis && result.ai_analysis.trim() ? (
-                (() => {
-                  const processedContent = result.ai_analysis
-                    .split('\n')
-                    .filter(p => p.trim())
-                    .filter(p => !p.includes('API_KEY') && !p.includes('function') && !p.includes('return') && !p.includes('总字数') && !p.includes('字数统计'))
-                    .map(paragraph => {
-                      if (paragraph.includes('##') || paragraph.match(/^【.*】$/) || paragraph.match(/^\d+[\.、]/) || paragraph.includes('：')) {
-                        return paragraph.replace(/^#+\s*/, '').replace(/^\d+[\.、]\s*/, '').trim()
-                      }
-                      return paragraph.replace(/[*#]+/g, '').trim()
-                    })
-                    .filter(p => p.length > 3)
-                  
-                  console.log('AI Analysis Content:', processedContent)
-                  
-                  if (processedContent.length === 0) {
-                    return (
-                      <div className="text-center py-6">
-                        <p className="text-slate-500 dark:text-slate-400 font-serif text-sm">
-                          原始内容：{result.ai_analysis.substring(0, 200)}...
-                        </p>
+          </CardHeader>
+          
+          {showDetailedAnalysis && (
+            <CardContent className="p-6 space-y-8">
+              {/* 相处建议 - 雅黑风格 */}
+              <div>
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
+                    <span className="text-sm font-bold">策</span>
+                  </div>
+                  <h4 className="text-base font-serif font-semibold text-slate-800 dark:text-slate-200">相处良策</h4>
+                </div>
+                <div className="space-y-4">
+                  {result.analysis.suggestions.map((suggestion, index) => (
+                    <div key={index} className="relative">
+                      <div className="flex items-start space-x-4 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                          {index + 1}
+                        </div>
+                        <p className="text-sm font-serif text-slate-800 dark:text-slate-200 leading-relaxed pt-1">{suggestion}</p>
                       </div>
-                    )
-                  }
-                  
-                  return processedContent.map((paragraph, index) => {
-                    const isHeading = paragraph.match(/^【.*】$/) || paragraph.includes('：') || paragraph.match(/^\w+分析/) || paragraph.match(/^\w+建议/)
-                    
-                    return (
-                      <div key={index} className="mb-3 last:mb-0">
-                        {isHeading ? (
-                          <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-2 font-serif">
-                            {paragraph}
-                          </h4>
-                        ) : (
-                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm font-serif">
-                            {paragraph}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  })
-                })()
-              ) : (
-                <div className="text-center py-6">
-                  <p className="text-slate-500 dark:text-slate-400 font-serif text-sm">
-                    {result.ai_analysis ? '内容处理中...' : 'AI正在为您生成深度分析解读...'}
-                  </p>
-                  {result.ai_analysis && (
-                    <p className="text-xs text-slate-400 mt-2">
-                      调试信息: {typeof result.ai_analysis} - 长度: {result.ai_analysis.length}
-                    </p>
-                  )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI深度解读 - 雅黑风格 */}
+              {result.ai_analysis && (
+                <div>
+                  <div className="flex items-center mb-4">
+                    <div className="w-8 h-8 bg-slate-600 dark:bg-slate-500 rounded-full flex items-center justify-center text-white mr-3">
+                      <span className="text-sm font-bold">智</span>
+                    </div>
+                    <h4 className="text-base font-serif font-semibold text-slate-800 dark:text-slate-200">智者解读</h4>
+                  </div>
+                  <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-gray-800/50 rounded-lg border-2 border-slate-200 dark:border-slate-600 shadow-inner">
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-sm">
+                      {(() => {
+                        const processedContent = result.ai_analysis
+                          .split('\n')
+                          .filter(p => p.trim())
+                          .filter(p => !p.includes('API_KEY') && !p.includes('function') && !p.includes('return') && !p.includes('总字数') && !p.includes('字数统计'))
+                          .map(paragraph => {
+                            // 清理多余符号和格式
+                            return paragraph
+                              .replace(/^#+\s*/, '') // 移除markdown标题符号
+                              .replace(/^\d+[\.、]\s*/, '') // 移除数字编号
+                              .replace(/[*#]+/g, '') // 移除markdown强调符号
+                              .trim()
+                          })
+                          .filter(p => p.length > 3)
+                        
+                        return processedContent.map((paragraph, index) => {
+                          // 判断是否为标题
+                          const isHeading = paragraph.match(/^【.*】$/) || 
+                                          paragraph.includes('：') || 
+                                          paragraph.match(/^\w+分析/) || 
+                                          paragraph.match(/^\w+建议/) ||
+                                          paragraph.match(/^性格配对/) ||
+                                          paragraph.match(/^感情运势/) ||
+                                          paragraph.match(/^事业财运/) ||
+                                          paragraph.match(/^婚姻家庭/) ||
+                                          paragraph.match(/^改善建议/)
+                          
+                          if (isHeading) {
+                            return (
+                              <div key={index} className="mb-4">
+                                <h5 className="text-base font-serif font-bold text-slate-700 dark:text-slate-300 mb-2 pb-1 border-b border-slate-200 dark:border-slate-600">
+                                  {paragraph}
+                                </h5>
+                              </div>
+                            )
+                          } else {
+                            return (
+                              <p key={index} className="mb-3 last:mb-0 text-slate-700 dark:text-slate-300 leading-relaxed font-serif indent-4">
+                                {paragraph}
+                              </p>
+                            )
+                          }
+                        })
+                      })()}
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          )}
+        </Card>
       </div>
     </div>
   )

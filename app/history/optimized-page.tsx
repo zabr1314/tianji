@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -93,6 +93,64 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
+// 自定义Hook：滚动监听
+function useInfiniteScroll(callback: () => void, hasMore: boolean, loading: boolean) {
+  const [isFetching, setIsFetching] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // 放宽触发条件：距离底部200px时就开始加载
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+      const clientHeight = document.documentElement.clientHeight || window.innerHeight
+      
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 200
+      
+      // 调试信息
+      if (isNearBottom) {
+        console.log('滚动调试:', {
+          scrollTop,
+          clientHeight,
+          scrollHeight,
+          isNearBottom,
+          isFetching,
+          hasMore,
+          loading,
+          shouldTrigger: isNearBottom && !isFetching && hasMore && !loading
+        })
+      }
+      
+      if (!isNearBottom || isFetching || !hasMore || loading) {
+        return
+      }
+      
+      console.log('触发无限滚动加载')
+      setIsFetching(true)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isFetching, hasMore, loading])
+
+  useEffect(() => {
+    if (!isFetching) return
+    
+    const executeCallback = async () => {
+      try {
+        await callback()
+      } catch (error) {
+        console.error('无限滚动回调错误:', error)
+      } finally {
+        setIsFetching(false)
+      }
+    }
+    
+    executeCallback()
+  }, [isFetching, callback])
+
+  return [isFetching, setIsFetching]
+}
+
 // 自定义Hook：缓存
 function useCache<T>(key: string, defaultValue: T) {
   const [value, setValue] = useState<T>(() => {
@@ -136,6 +194,7 @@ export default function OptimizedHistoryPage() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   // 使用状态存储筛选条件
   const [filters, setCachedFilters] = useState<FilterParams>({
@@ -156,11 +215,11 @@ export default function OptimizedHistoryPage() {
   }, [setCachedFilters])
 
   // 优化后的数据加载函数
-  const loadData = useCallback(async (refresh = false) => {
+  const loadData = useCallback(async (refresh = false, page = 0) => {
     try {
       if (refresh) {
         setRefreshing(true)
-      } else {
+      } else if (page === 0) {
         setLoading(true)
       }
 
@@ -170,73 +229,99 @@ export default function OptimizedHistoryPage() {
         search: debouncedSearchQuery,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
-        limit: '5',
-        offset: (currentPage * 5).toString()
+        limit: '12',
+        offset: (page * 12).toString()
       })
 
       const response = await fetch(`/api/history/records?${queryParams}`)
       const data = await response.json()
+      
+      // 前端调试日志
+      console.log(`前端调试 - 页码: ${page}, 偏移: ${page * 12}, API返回:`, {
+        recordsCount: data.data?.length || 0,
+        totalCount: data.pagination?.totalCount,
+        hasMore: data.pagination?.hasMore,
+        url: `/api/history/records?${queryParams}`
+      })
 
       if (data.success) {
         const newRecords = data.data || []
+        const pagination = data.pagination || {}
         
         // 如果是刷新或第一页，替换记录；否则追加
-        if (refresh || currentPage === 0) {
+        if (refresh || page === 0) {
           setRecords(newRecords)
+          // 更新统计信息 - 使用API返回的总数
+          setStats(prev => ({
+            ...prev,
+            totalCount: pagination.totalCount || newRecords.length,
+            totalPoints: newRecords.reduce((sum: number, r: any) => sum + (r.points_cost || 0), 0),
+            favoriteCount: newRecords.filter((r: any) => r.is_favorite).length
+          }))
         } else {
-          setRecords(prev => [...prev, ...newRecords])
+          // 追加新记录，避免重复
+          setRecords(prev => {
+            const existingIds = new Set(prev.map((r: AnalysisRecord) => r.id))
+            const filteredNewRecords = newRecords.filter((r: AnalysisRecord) => !existingIds.has(r.id))
+            const updatedRecords = [...prev, ...filteredNewRecords]
+            
+            // 更新统计信息
+            setStats(prevStats => ({
+              ...prevStats,
+              totalPoints: updatedRecords.reduce((sum: number, r: any) => sum + (r.points_cost || 0), 0),
+              favoriteCount: updatedRecords.filter((r: any) => r.is_favorite).length
+            }))
+            
+            return updatedRecords
+          })
         }
         
-        // 简单计算统计信息
-        setStats({
-          totalCount: newRecords.length,
-          totalPoints: newRecords.reduce((sum: number, r: any) => sum + (r.points_cost || 0), 0),
-          favoriteCount: newRecords.filter((r: any) => r.is_favorite).length,
-          typeCounts: {},
-          mostUsedType: undefined,
-          averagePointsPerRecord: 0
-        })
-        setHasMore(newRecords.length === 5)
+        // 使用API返回的hasMore判断
+        setHasMore(pagination.hasMore !== false)
       } else {
         console.error('Failed to load data:', data.error)
-        if (currentPage === 0) {
+        if (page === 0) {
           setRecords([])
         }
       }
     } catch (error) {
       console.error('Error loading data:', error)
-      if (currentPage === 0) {
+      if (page === 0) {
         setRecords([])
       }
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [filters, debouncedSearchQuery, currentPage])
+  }, [filters, debouncedSearchQuery])
 
   // 初始加载和筛选变化时加载数据
   useEffect(() => {
-    loadData()
-  }, [loadData, filters.analysisType, filters.isFavorite, filters.sortBy, filters.sortOrder, debouncedSearchQuery])
-
-  // 监听页码变化，触发加载更多数据
-  useEffect(() => {
-    if (currentPage > 0) {
-      loadData()
-    }
-  }, [currentPage, loadData])
+    setCurrentPage(0)
+    loadData(false, 0)
+  }, [filters.analysisType, filters.isFavorite, filters.sortBy, filters.sortOrder, debouncedSearchQuery, loadData])
 
   // 分页加载
-  const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      setCurrentPage(prev => prev + 1)
+  const loadMore = useCallback(async () => {
+    if (!loading && !isLoadingMore && hasMore) {
+      setIsLoadingMore(true)
+      const nextPage = currentPage + 1
+      setCurrentPage(nextPage)
+      
+      // 使用统一的loadData函数
+      await loadData(false, nextPage)
+      setIsLoadingMore(false)
     }
-  }, [loading, hasMore])
+  }, [loading, isLoadingMore, hasMore, currentPage, loadData])
+
+  // 无限滚动
+  useInfiniteScroll(loadMore, hasMore, loading || isLoadingMore)
 
   // 刷新数据
   const refreshData = useCallback(() => {
     setCurrentPage(0)
-    loadData(true)
+    setIsLoadingMore(false)
+    loadData(true, 0)
   }, [loadData])
 
   // 切换收藏状态（优化版）
@@ -536,7 +621,7 @@ export default function OptimizedHistoryPage() {
             {loading && currentPage === 0 ? (
               // 优化的骨架屏
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 5 }).map((_, i) => (
+                {Array.from({ length: 12 }).map((_, i) => (
                   <Card key={i} className="animate-pulse bg-white/90 dark:bg-slate-900/90">
                     <CardContent className="p-6">
                       <div className="flex items-center space-x-3 mb-4">
@@ -712,24 +797,20 @@ export default function OptimizedHistoryPage() {
                   })}
                 </div>
 
-                {/* 加载更多 */}
-                {hasMore && (
+                {/* 加载更多指示器 */}
+                {isLoadingMore && (
                   <div className="text-center mt-8">
-                    <Button 
-                      variant="outline" 
-                      className="font-serif"
-                      onClick={loadMore}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          加载中...
-                        </>
-                      ) : (
-                        '加载更多记录'
-                      )}
-                    </Button>
+                    <div className="flex items-center justify-center space-x-2 text-slate-500 dark:text-slate-400">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="font-serif">正在加载更多记录...</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* 到底了的提示 */}
+                {!hasMore && records.length > 0 && (
+                  <div className="text-center mt-8 text-slate-500 dark:text-slate-400 font-serif">
+                    已显示全部记录
                   </div>
                 )}
               </>

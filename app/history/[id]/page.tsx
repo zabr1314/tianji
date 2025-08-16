@@ -167,7 +167,7 @@ ${analysis.warnings_and_suggestions.health_reminders.map((reminder: string) => `
                 </CardHeader>
                 <CardContent className="text-center">
                   <div className={`text-2xl font-serif font-bold ${getQualityColor(score as number)} drop-shadow-sm`}>
-                    {score}/10
+                    {score as number}/10
                   </div>
                   <div className="text-xs font-serif text-purple-600 dark:text-purple-400">
                     {getQualityLabel(score as number)}
@@ -531,7 +531,7 @@ ${analysis.warnings_and_suggestions.health_reminders.map((reminder: string) => `
                   ),
                   // 列表项 - 统一格式
                   li: ({children, ...props}) => {
-                    const isOrdered = props.ordered;
+                    const isOrdered = (props as any).ordered;
                     return (
                       <li className={`${isOrdered ? 'list-decimal' : 'list-disc'} list-inside text-slate-700 dark:text-slate-300 leading-relaxed pl-2`}>
                         <span className="ml-2 font-serif">{children}</span>
@@ -539,7 +539,8 @@ ${analysis.warnings_and_suggestions.health_reminders.map((reminder: string) => `
                     )
                   },
                   // 代码
-                  code: ({children, inline}) => {
+                  code: ({children, ...props}) => {
+                    const inline = (props as any).inline;
                     if (inline) {
                       return (
                         <code className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded text-sm font-mono">

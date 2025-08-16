@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 
       // 扣除天机点
       if (!saveError) {
-        await TianjiPointsService.consumePoints(
+        await TianjiPointsService.spendPoints(
           user.id, 
           cost, 
           'dream_interpretation',
