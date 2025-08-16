@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "name": "tianji-ai",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY": "@supabase_anon_key",
+    "DEEPSEEK_API_KEY": "@deepseek_api_key",
+    "ZPAY_PID": "@zpay_pid",
+    "ZPAY_PKEY": "@zpay_pkey",
+    "NEXT_PUBLIC_SITE_URL": "@site_url"
+  },
+  "functions": {
+    "app/api/*/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
