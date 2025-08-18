@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DateSelector } from '@/components/ui/date-selector'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 
 interface BaziInputData {
   name: string
@@ -115,41 +116,17 @@ export function BaziInputForm({ onAnalysisStart, onAnalysisComplete, loading = f
           gender: formData.gender
         }
 
-        const response = await fetch('/api/bazi/analyze', {
+        const result = await apiCall('/api/bazi/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(requestData)
         })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          
-          if (response.status === 401) {
-            alert('请先登录后再进行分析')
-            window.location.href = '/auth/login'
-            return
-          }
-          
-          if (response.status === 402) {
-            alert(`天机点余额不足！\n需要: ${errorData.required_points || 200} 天机点\n请前往充值页面购买天机点`)
-            window.location.href = '/points'
-            return
-          }
-          
-          throw new Error(errorData.error || '分析请求失败')
-        }
-
-        const result = await response.json()
         onAnalysisComplete?.(result)
       } catch (error) {
         console.error('Analysis error:', error)
-        if (error instanceof Error) {
-          alert(`分析失败: ${error.message}`)
-        } else {
-          alert('分析失败，请稍后重试')
-        }
+        handleApiError(error, '分析失败，请稍后重试')
       }
     }
   }
