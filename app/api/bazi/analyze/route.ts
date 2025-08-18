@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { BaziCalculator } from '@/lib/bazi/calculator'
 import { BaziAnalysisService, TianjiPointsService } from '@/lib/database/services'
+import { handleApiError, validateEnvironment } from '@/lib/api/error-handler'
 import OpenAI from 'openai'
 
-// DeepSeek AI client
+// DeepSeek AI client - 检查环境变量
+if (!validateEnvironment()) {
+  console.error('Environment validation failed for DEEPSEEK_API_KEY')
+}
+
 const openai = new OpenAI({
   baseURL: 'https://api.deepseek.com',
   apiKey: process.env.DEEPSEEK_API_KEY!
@@ -174,11 +179,7 @@ export async function POST(request: NextRequest) {
         aiAnalysis = aiResponse.trim()
       }
     } catch (aiError) {
-      console.error('AI analysis failed:', aiError)
-      return NextResponse.json(
-        { error: 'AI服务暂时不可用，请稍后再试' },
-        { status: 503 }
-      )
+      return handleApiError(aiError, 'Bazi AI analysis')
     }
 
     // 先扣除天机点
