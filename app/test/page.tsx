@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 // 测试页面 - 验证基础部署是否正常
 export default function TestPage() {
   return (
@@ -10,7 +12,7 @@ export default function TestPage() {
         <li>SITE_URL: {process.env.NEXT_PUBLIC_SITE_URL || '❌ 缺失'}</li>
       </ul>
       <p style={{ marginTop: '20px' }}>
-        <a href="/" style={{ color: '#0070f3' }}>← 返回首页</a>
+        <Link href="/" style={{ color: '#0070f3' }}>← 返回首页</Link>
       </p>
     </div>
   )
