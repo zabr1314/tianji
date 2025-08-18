@@ -34,6 +34,7 @@ import { BaziResult } from '@/components/modules/BaziResult'
 import { HepanResult } from '@/components/modules/HepanResult'
 import { CompactHepanResult } from '@/components/modules/CompactHepanResult'
 import { GenericAnalysisResult } from '@/components/modules/GenericAnalysisResult'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 
 // 分析类型配置
 const ANALYSIS_TYPES = {
@@ -611,8 +612,7 @@ export default function RecordDetailPage() {
   const loadRecord = async (id: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/history/records/${id}`)
-      const data = await response.json()
+      const data = await apiCall(`/api/history/records/${id}`) as any
       
       if (data.success && data.data) {
         setRecord(data.data)
@@ -620,7 +620,7 @@ export default function RecordDetailPage() {
         setError(data.error || '记录不存在')
       }
     } catch (error) {
-      console.error('Failed to load record:', error)
+      handleApiError(error, '加载记录失败')
       setError('加载记录失败')
     } finally {
       setLoading(false)
@@ -631,7 +631,7 @@ export default function RecordDetailPage() {
     if (!record) return
     
     try {
-      const response = await fetch(`/api/history/records/${record.id}`, {
+      const data = await apiCall(`/api/history/records/${record.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -639,9 +639,7 @@ export default function RecordDetailPage() {
         body: JSON.stringify({
           is_favorite: !record.is_favorite
         })
-      })
-
-      const data = await response.json()
+      }) as any
 
       if (data.success) {
         setRecord(prev => prev ? { ...prev, is_favorite: !prev.is_favorite } : null)
@@ -649,7 +647,7 @@ export default function RecordDetailPage() {
         console.error('Failed to toggle favorite:', data.error)
       }
     } catch (error) {
-      console.error('Failed to toggle favorite:', error)
+      handleApiError(error, '更新收藏状态失败')
     }
   }
 

@@ -13,6 +13,7 @@ import { TimeSelector } from '@/components/ui/time-selector'
 import { CitySelector } from '@/components/ui/city-selector'
 import { User, Sparkles, RefreshCw, BookOpen, Star, TrendingUp, TrendingDown, Minus, Download, Share2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 
 interface NameAnalysisResult {
   success: boolean
@@ -134,7 +135,7 @@ export default function NameAnalysisPage() {
         ...(formData.birth_date && { gender: formData.gender })
       }
 
-      const response = await fetch('/api/name/analyze', {
+      const data = await apiCall('/api/name/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,15 +143,9 @@ export default function NameAnalysisPage() {
         body: JSON.stringify(requestData)
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '姓名分析失败')
-      }
-
-      setResult(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '网络错误，请稍后重试')
+      setResult(data as any)
+    } catch (error) {
+      handleApiError(error, '姓名分析失败，请稍后重试')
     } finally {
       setIsAnalyzing(false)
     }

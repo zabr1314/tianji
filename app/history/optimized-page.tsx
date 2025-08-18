@@ -34,6 +34,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Link from 'next/link'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 
 // 分析类型配置
 const ANALYSIS_TYPES = {
@@ -233,8 +234,7 @@ export default function OptimizedHistoryPage() {
         offset: (page * 12).toString()
       })
 
-      const response = await fetch(`/api/history/records?${queryParams}`)
-      const data = await response.json()
+      const data = await apiCall(`/api/history/records?${queryParams}`) as any
       
       // 前端调试日志
       console.log(`前端调试 - 页码: ${page}, 偏移: ${page * 12}, API返回:`, {
@@ -285,7 +285,7 @@ export default function OptimizedHistoryPage() {
         }
       }
     } catch (error) {
-      console.error('Error loading data:', error)
+      handleApiError(error, '加载历史记录失败')
       if (page === 0) {
         setRecords([])
       }
@@ -346,7 +346,7 @@ export default function OptimizedHistoryPage() {
     setRecords(prev => prev.filter(r => r.id !== record.id))
     
     try {
-      const response = await fetch('/api/history/optimized-simple', {
+      const data = await apiCall('/api/history/optimized-simple', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -356,9 +356,7 @@ export default function OptimizedHistoryPage() {
             analysis_type: record.analysis_type
           }]
         })
-      })
-
-      const data = await response.json()
+      }) as any
       
       if (!data.success) {
         // 如果失败，恢复记录
@@ -376,8 +374,7 @@ export default function OptimizedHistoryPage() {
     } catch (error) {
       // 如果失败，恢复记录
       refreshData()
-      console.error('Error deleting record:', error)
-      alert('删除记录失败，请稍后重试')
+      handleApiError(error, '删除记录失败，请稍后重试')
     }
   }, [refreshData])
 

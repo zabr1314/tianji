@@ -15,6 +15,7 @@ import { TimeSelector } from '@/components/ui/time-selector'
 import { CitySelector } from '@/components/ui/city-selector'
 import { Heart, ArrowLeft, Users, Sparkles, Calendar, User, RefreshCw, Download, Share2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 // PDF和Canvas库将动态导入以优化性能
 // 懒加载CompactHepanResult组件以优化性能
 const CompactHepanResult = dynamic(() => import('@/components/modules/CompactHepanResult').then(mod => ({ default: mod.CompactHepanResult })), {
@@ -127,7 +128,7 @@ export default function HepanPage() {
     setResult(null)
 
     try {
-      const response = await fetch('/api/hepan/analyze', {
+      const data = await apiCall('/api/hepan/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,15 +136,9 @@ export default function HepanPage() {
         body: JSON.stringify({ person1, person2, relationship_type: relationshipType })
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '分析失败')
-      }
-
-      setResult(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '网络错误，请稍后重试')
+      setResult(data as any)
+    } catch (error) {
+      handleApiError(error, '合盘分析失败，请稍后重试')
     } finally {
       setIsAnalyzing(false)
     }
