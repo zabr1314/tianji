@@ -12,7 +12,7 @@ export default function TestPage() {
         <li>SITE_URL: {process.env.NEXT_PUBLIC_SITE_URL || '❌ 缺失'}</li>
       </ul>
       <p style={{ marginTop: '20px' }}>
-        <Link href="/" style={{ color: '#0070f3' }}>← 返回首页</Link>
+        <Link href="/" className="text-blue-600 hover:text-blue-800">← 返回首页</Link>
       </p>
     </div>
   )
