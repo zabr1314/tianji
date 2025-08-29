@@ -507,9 +507,16 @@ tianji/
 
 ## 📞 联系我们
 
-- **项目主页**: https://github.com/your-username/tianji-ai
-- **问题反馈**: https://github.com/your-username/tianji-ai/issues
-- **邮箱**: contact@tianji-ai.com
+- **项目主页**: https://github.com/zabr1314/tianji
+- **问题反馈**: https://github.com/zabr1314/tianji/issues
+- **邮箱**: 2126419009@qq.com
+
+### 微信联系
+<div align="center">
+  <img src="./docs/images/wechat-qr.png" alt="微信二维码" width="200"/>
+  <br/>
+  <i>扫描二维码添加微信</i>
+</div>
 
 ## 🙏 致谢
 
