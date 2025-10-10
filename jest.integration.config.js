@@ -12,7 +12,7 @@ const customJestConfig = {
     '**/*.integration.(test|spec).(ts|tsx|js)'
   ],
   testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.next/'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
   // Integration tests may take longer

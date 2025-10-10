@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Sparkles, Coins, Clock, Zap, RefreshCw, HelpCircle, Download, Share2, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 // 动态加载动画组件以优化性能
 const CoinFlipAnimation = dynamic(() => import('@/components/ui/coin-flip-animation').then(mod => ({ default: mod.CoinFlipAnimation })), {
   loading: () => <div className="h-32 w-32 bg-amber-100 dark:bg-amber-900 rounded-full animate-pulse mx-auto" />,
@@ -163,7 +164,7 @@ export default function BuguaPage() {
         ...(method === 'coins' && { coin_results: coinResults })
       }
 
-      const response = await fetch('/api/bugua/analyze', {
+      const data = await apiCall('/api/bugua/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,15 +172,9 @@ export default function BuguaPage() {
         body: JSON.stringify(requestBody)
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '卜卦分析失败')
-      }
-
-      setResult(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '网络错误，请稍后重试')
+      setResult(data as BuguaResult)
+    } catch (error) {
+      handleApiError(error, '卜卦分析失败，请稍后重试')
     } finally {
       setIsAnalyzing(false)
     }

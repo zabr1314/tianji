@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Moon, Sparkles, RefreshCw, Brain, Heart, Star, TrendingUp, AlertCircle, Lightbulb, Download, Share2, Copy, Check } from 'lucide-react'
 import { DreamCategory, DreamMood } from '@/lib/dream/calculator'
 import { LightweightMarkdown } from '@/components/ui/lightweight-markdown'
+import { apiCall, handleApiError } from '@/lib/utils/api-client'
 
 interface DreamInterpretationResult {
   success: boolean
@@ -128,7 +129,7 @@ export default function DreamInterpretationPage() {
         }
       }
 
-      const response = await fetch('/api/dream/interpret', {
+      const data = await apiCall('/api/dream/interpret', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,15 +137,9 @@ export default function DreamInterpretationPage() {
         body: JSON.stringify(requestData)
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '梦境解析失败')
-      }
-
-      setResult(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '网络错误，请稍后重试')
+      setResult(data as DreamInterpretationResult)
+    } catch (error) {
+      handleApiError(error, '梦境解析失败，请稍后重试')
     } finally {
       setIsAnalyzing(false)
     }
